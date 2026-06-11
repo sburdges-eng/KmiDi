@@ -64,12 +64,14 @@ jobs:
         continue-on-error: true
 
       - name: Run pytest with coverage
-        run: |
-          pytest tests -v \
-            --cov=music_brain \
-            --cov-report=term-missing \
-            --cov-report=xml \
-            --cov-report=html
+        # Folded scalar: YAML joins these lines into one command. Backslash
+        # continuations are bash-only and break pwsh on windows-latest.
+        run: >-
+          pytest tests -v
+          --cov=music_brain
+          --cov-report=term-missing
+          --cov-report=xml
+          --cov-report=html
 
       - name: Upload coverage to Codecov
         if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11'

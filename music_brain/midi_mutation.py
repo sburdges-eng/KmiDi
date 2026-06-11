@@ -34,7 +34,7 @@ from __future__ import annotations
 
 import copy
 from dataclasses import dataclass, field
-from typing import Optional
+from typing import Optional, Union
 
 # ----------------------------------------------------------------------
 # Domain model
@@ -90,7 +90,9 @@ class MoveNote:
     new_start_tick: int
 
 
-Mutation = AddNote | RemoveNote | SetPitch | SetVelocity | MoveNote
+# typing.Union, not PEP 604 `|`: this assignment evaluates at import time
+# and the project floor is requires-python >= 3.9 (runtime `|` needs 3.10).
+Mutation = Union[AddNote, RemoveNote, SetPitch, SetVelocity, MoveNote]
 
 
 # ----------------------------------------------------------------------

@@ -11,6 +11,9 @@ recovery callback (typically: stop the worker, log telemetry, restart).
 Design constraints:
 - Stdlib only (``time`` + ``threading`` + ``dataclasses``). No background
   thread is started until ``start()`` is called.
+- Ages are measured with ``time.perf_counter()``, not ``time.monotonic()``:
+  on Windows for CPython <= 3.12 ``monotonic()`` is ``GetTickCount64()``
+  with ~15.6 ms granularity, which cannot resolve sub-tick stale budgets.
 - Not an RT-thread primitive. Use this for ML inference workers,
   background generators, MIDI-CI daemon, etc.; never call from
   ``processBlock``.
