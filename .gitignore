@@ -277,6 +277,8 @@ yarn.lock
 # package-lock.json kept for reproducible npm install (CI: npm ci / --frozen-lockfile)
 *.lock
 !flake.lock
+# Cargo.lock kept for reproducible cargo check/test (CI: --locked)
+!engine/intent_ir/Cargo.lock
 
 # ML/AI models (use Git LFS or cloud storage)
 *.pt

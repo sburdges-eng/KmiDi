@@ -28,15 +28,16 @@ run_cmd() {
 #   needed the Qt desktop target. KellyCore still pulls Qt6 Core/Widgets, so
 #   the gate job continues to install qt6-base-dev.
 # - npm_install runs `npm ci` so `npm run build` finds tsc/vite in node_modules.
-# - cargo_check drops --offline --frozen: there is no Cargo.lock in
-#   engine/intent_ir/, and CI runners have network access for crates.io.
+# - cargo_check uses --locked (not --offline --frozen): the committed
+#   engine/intent_ir/Cargo.lock pins dependency resolution for reproducible
+#   baselines, while CI runners may still fetch pinned crates from crates.io.
 run_cmd cmake_config cmake -S . -B build/diag-debug -G Ninja -DBUILD_TESTS=ON -DBUILD_PLUGINS=OFF
 run_cmd cmake_build cmake --build build/diag-debug --target KellyCore
 run_cmd ctest ctest --test-dir build/diag-debug --output-on-failure
 run_cmd pytest pytest tests -q
 run_cmd npm_install npm ci
 run_cmd npm_build npm run build
-run_cmd cargo_check cargo check --manifest-path engine/intent_ir/Cargo.toml
+run_cmd cargo_check cargo check --locked --manifest-path engine/intent_ir/Cargo.toml
 
 python3 scripts/diagnostics/bug_taxonomy_parser.py --logs-dir "${LOG_DIR}" --out "${LOG_DIR}/bug_taxonomy_report.md"
 echo "Done. Report: ${LOG_DIR}/bug_taxonomy_report.md"
