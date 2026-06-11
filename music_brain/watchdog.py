@@ -11,6 +11,9 @@ recovery callback (typically: stop the worker, log telemetry, restart).
 Design constraints:
 - Stdlib only (``time`` + ``threading`` + ``dataclasses``). No background
   thread is started until ``start()`` is called.
+- Ages are measured with ``time.perf_counter()``, not ``time.monotonic()``:
+  on Windows for CPython <= 3.12 ``monotonic()`` is ``GetTickCount64()``
+  with ~15.6 ms granularity, which cannot resolve sub-tick stale budgets.
 - Not an RT-thread primitive. Use this for ML inference workers,
   background generators, MIDI-CI daemon, etc.; never call from
   ``processBlock``.
@@ -32,7 +35,7 @@ class _WorkerState:
     name: str
     stale_timeout_s: float
     on_stale: Callable[[str], None]
-    last_heartbeat: float = field(default_factory=time.monotonic)
+    last_heartbeat: float = field(default_factory=time.perf_counter)
     fired: bool = False
 
 
@@ -86,7 +89,7 @@ class Watchdog:
             state = self._workers.get(name)
             if state is None:
                 return
-            state.last_heartbeat = time.monotonic()
+            state.last_heartbeat = time.perf_counter()
             state.fired = False  # re-arm after recovery
 
     def is_stale(self, name: str) -> bool:
@@ -94,14 +97,14 @@ class Watchdog:
             state = self._workers.get(name)
             if state is None:
                 return False
-            return (time.monotonic() - state.last_heartbeat) > state.stale_timeout_s
+            return (time.perf_counter() - state.last_heartbeat) > state.stale_timeout_s
 
     def last_heartbeat_age_s(self, name: str) -> Optional[float]:
         with self._lock:
             state = self._workers.get(name)
             if state is None:
                 return None
-            return time.monotonic() - state.last_heartbeat
+            return time.perf_counter() - state.last_heartbeat
 
     # ------------------------------------------------------------------
     # Lifecycle
@@ -134,7 +137,7 @@ class Watchdog:
 
     def _check_once(self) -> None:
         """Single check pass — exposed for deterministic testing."""
-        now = time.monotonic()
+        now = time.perf_counter()
         to_fire: list[tuple[Callable[[str], None], str]] = []
         with self._lock:
             for state in self._workers.values():
