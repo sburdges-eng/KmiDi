@@ -66,6 +66,7 @@ class ContextWindow:
         self._summarizer = summarizer
         self._entries: List[ContextEntry] = []
         self._summary = ""
+        self._summary_tokens = 0
 
     # -------------------------------------------------------------- inspect
     @property
@@ -78,7 +79,7 @@ class ContextWindow:
 
     @property
     def total_tokens(self) -> int:
-        return sum(e.tokens for e in self._entries)
+        return self._summary_tokens + sum(e.tokens for e in self._entries)
 
     @property
     def max_tokens(self) -> int:
@@ -101,10 +102,14 @@ class ContextWindow:
         empty; we don't drop the just-appended data either).
         """
         dropped: List[ContextEntry] = []
-        while len(self._entries) > 1 and sum(e.tokens for e in self._entries) > self._max_tokens:
+        while (
+            len(self._entries) > 1
+            and self._summary_tokens + sum(e.tokens for e in self._entries) > self._max_tokens
+        ):
             dropped.append(self._entries.pop(0))
         if dropped and self._summarizer is not None:
             self._summary = self._summarizer(dropped, self._summary)
+            self._summary_tokens = len(self._summary.split()) if self._summary else 0
 
     # -------------------------------------------------------------- render
     def render(self) -> str:

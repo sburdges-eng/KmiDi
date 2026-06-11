@@ -52,6 +52,7 @@ class GenerationTransaction:
         self._committed = False
         self._closed = False
         self._active = False
+        self._rolled_back = False
 
     @property
     def is_active(self) -> bool:
@@ -75,6 +76,7 @@ class GenerationTransaction:
         self._committed = False
         self._active = True
         self._closed = False
+        self._rolled_back = False
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb) -> bool:
@@ -100,6 +102,8 @@ class GenerationTransaction:
         closed raises :class:`RollbackError`."""
         if self._closed:
             raise RollbackError("scope is closed; cannot commit after exit")
+        if self._rolled_back:
+            raise RollbackError("scope has been rolled back; cannot commit")
         if self._committed:
             raise RollbackError("scope has already been committed")
         self._committed = True
@@ -114,6 +118,7 @@ class GenerationTransaction:
         if self._closed:
             raise RollbackError("scope is closed; cannot rollback after exit")
         self._committed = False
+        self._rolled_back = True
         # Re-snapshot from parent so the in-scope state matches the parent
         # again (the caller may want to keep experimenting).
         self._snapshot = copy.deepcopy(self._parent)

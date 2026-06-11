@@ -71,7 +71,7 @@ def orchestration_dict_to_instruments(data: Dict[str, Any]) -> List[Dict[str, An
 
 def interpolate_energy_at_bar(curve: EnergyCurveV1, bar: float) -> float:
     """Linearly interpolate energy at `bar`. Clamps to endpoint values outside range."""
-    points = curve.points
+    points = sorted(curve.points, key=lambda p: p.bar)
     if bar <= points[0].bar:
         return points[0].value
     if bar >= points[-1].bar:
@@ -139,17 +139,20 @@ def orchestration_with_energy_gating(
     if energy_curve is None or not structure:
         return orchestration_to_instruments(orch)
 
-    section_starts = _structure_section_starts(structure)
+    gating_structure = [s for s in structure if s.get("name") != "build"]
+    section_starts = _structure_section_starts(gating_structure)
 
     out: List[Dict[str, Any]] = []
     for role, spec in sorted(orch.roles.items()):
         active_sections: List[str] = []
-        for section, start in zip(structure, section_starts):
+        for section, start in zip(gating_structure, section_starts):
             bars = int(section.get("bars", 0))
             reps = int(section.get("repetitions", 1)) or 1
             section_energy = compute_section_energy(energy_curve, start, bars * reps)
             if section_energy["peak"] >= spec.active_threshold:
-                active_sections.append(str(section.get("name", "")))
+                name = str(section.get("name", ""))
+                if name not in active_sections:
+                    active_sections.append(name)
         if not active_sections:
             continue
         techniques = [f"role:{role}"] + [f"active_in:{name}" for name in active_sections]

@@ -105,8 +105,7 @@ def parse_chord(symbol: str) -> Chord:
             quality = qual
             break
     else:
-        # `else` on for-else only runs if no break — quality stays 'major'.
-        pass
+        raise ValueError(f"unrecognised chord suffix: {suffix!r} in {symbol!r}")
     return Chord(
         root_pc=root_pc,
         quality=quality,
