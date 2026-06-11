@@ -40,7 +40,9 @@ bool ProjectFile::load(const std::string &filepath) {
 
   std::stringstream buffer;
   buffer << file.rdbuf();
-  if (!fromJSON(buffer.str())) {
+
+  ProjectFile tmp;
+  if (!tmp.fromJSON(buffer.str())) {
     return false;
   }
 
@@ -53,7 +55,7 @@ bool ProjectFile::load(const std::string &filepath) {
   if (ec) {
     return false;
   }
-  for (auto &track : tracks_) {
+  for (auto &track : tmp.tracks_) {
     if (track.audioFilePath.empty()) {
       continue;
     }
@@ -71,6 +73,7 @@ bool ProjectFile::load(const std::string &filepath) {
     track.audioFilePath = resolved.string();
   }
 
+  *this = std::move(tmp);
   return true;
 }
 
