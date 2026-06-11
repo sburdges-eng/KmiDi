@@ -1,5 +1,10 @@
 # Structure Cross-Examination Index
 
+Historical note
+- This cross-examination set was produced under Tauri-era assumptions.
+- It remains useful as historical analysis, but it is not part of the current architecture authority set.
+- When these reports conflict with current architecture, follow the 2026 authority docs headed by `docs/ARCHITECTURE.md`.
+
 **Date:** January 18, 2026  
 **Status:** Complete  
 **Overall Compliance:** 65% → Target: 95%

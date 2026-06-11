@@ -15,10 +15,10 @@ using KellyTypesIntentResult = IntentResult;
 #include "common/Types.h" // Explicit include for Types.h types
 #include "engine/EmotionThesaurus.h"
 #include "engine/IntentPipeline.h" // Full definition needed
-#include <juce_audio_basics/juce_audio_basics.h>
-#include <juce_data_structures/juce_data_structures.h>
 #include <algorithm>
 #include <cmath>
+#include <juce_audio_basics/juce_audio_basics.h>
+#include <juce_data_structures/juce_data_structures.h>
 #include <numeric>
 #include <thread>
 #include <utility>
@@ -62,8 +62,9 @@ KellyTypesEmotionNode convertToUnifiedEmotionNode(const EmotionNode &legacy) {
   return unified;
 }
 
-std::array<float, 128> parseFeatureArray(const std::string &inputJson,
-                                         const std::array<float, 128> &fallback) {
+std::array<float, 128>
+parseFeatureArray(const std::string &inputJson,
+                  const std::array<float, 128> &fallback) {
   std::array<float, 128> features = fallback;
 
   auto parsed = juce::JSON::parse(inputJson);
@@ -660,7 +661,8 @@ GeneratedMidi MLIntentPipeline::generateFromAudio(const float *audioData,
     for (size_t i = 0; i < numSamples && i < 2048; ++i) {
       rms += audioData[i] * audioData[i];
     }
-    rms = (numSamples > 0) ? std::sqrt(rms / static_cast<float>(numSamples)) : 0.0f;
+    rms = (numSamples > 0) ? std::sqrt(rms / static_cast<float>(numSamples))
+                           : 0.0f;
     for (size_t i = 0; i < 128; ++i) {
       features[i] = rms;
     }
@@ -694,26 +696,47 @@ void MLIntentPipeline::setModelEnabled(Kelly::ML::ModelType type,
 }
 
 void MLIntentPipeline::spawnAsyncTask(std::function<void()> task) {
-  if (shuttingDown_.load()) return;
+  if (shuttingDown_.load())
+    return;
+
+  auto done = std::make_shared<std::atomic<bool>>(false);
+
   std::lock_guard<std::mutex> lock(asyncThreadsMutex_);
-  // Prune completed threads
-  asyncThreads_.erase(
-      std::remove_if(asyncThreads_.begin(), asyncThreads_.end(),
-          [](std::thread& t) { return !t.joinable(); }),
-      asyncThreads_.end());
-  asyncThreads_.emplace_back([this, t = std::move(task)]() {
-    t();
-  });
+  reapCompletedAsyncTasksLocked();
+  asyncThreads_.push_back(
+      AsyncWorker{std::thread([done, t = std::move(task)]() mutable {
+                    t();
+                    done->store(true, std::memory_order_release);
+                  }),
+                  std::move(done)});
 }
 
 void MLIntentPipeline::joinAsyncTasks() {
   std::lock_guard<std::mutex> lock(asyncThreadsMutex_);
-  for (auto &t : asyncThreads_) {
-    if (t.joinable()) {
-      t.join();
+  for (auto &worker : asyncThreads_) {
+    if (worker.thread.joinable()) {
+      worker.thread.join();
     }
   }
   asyncThreads_.clear();
+}
+
+void MLIntentPipeline::reapCompletedAsyncTasksLocked() {
+  auto out = asyncThreads_.begin();
+  for (auto it = asyncThreads_.begin(); it != asyncThreads_.end(); ++it) {
+    if (it->done && it->done->load(std::memory_order_acquire)) {
+      if (it->thread.joinable()) {
+        it->thread.join();
+      }
+      continue;
+    }
+
+    if (out != it) {
+      *out = std::move(*it);
+    }
+    ++out;
+  }
+  asyncThreads_.erase(out, asyncThreads_.end());
 }
 
 } // namespace kelly

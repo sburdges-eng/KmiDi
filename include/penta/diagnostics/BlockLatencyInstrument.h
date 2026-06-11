@@ -26,6 +26,7 @@
 #include <mach/mach_time.h>
 #else
 #include <chrono>
+#include <cstddef>
 #endif
 
 namespace penta {

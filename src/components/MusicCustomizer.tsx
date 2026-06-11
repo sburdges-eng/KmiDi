@@ -1,3 +1,5 @@
+import { emotionColor } from '../constants/emotions';
+
 export type MusicTechnique = {
   id: string;
   name: string;
@@ -47,18 +49,19 @@ const genres: Genre[] = [
   { id: "ambient", name: "Ambient", icon: "🌌", description: "Atmospheric and textural" },
 ];
 
-/* Muted palette aligned with design system (no purple/indigo) */
+/* Muted palette aligned with design system (no purple/indigo) — colors come
+   from the shared map so the Sound Palette matches the Compose mood ring. */
 const quickEmotions: QuickEmotion[] = [
-  { id: "happy", name: "Happy", icon: "😊", color: "#c9a227" },
-  { id: "sad", name: "Sad", icon: "😢", color: "#5c7c8a" },
-  { id: "angry", name: "Angry", icon: "😠", color: "#b54a4a" },
-  { id: "peaceful", name: "Peaceful", icon: "😌", color: "#4a7c6b" },
-  { id: "energetic", name: "Energetic", icon: "⚡", color: "#c9a227" },
-  { id: "melancholic", name: "Melancholic", icon: "🌙", color: "#6b7c8a" },
-  { id: "romantic", name: "Romantic", icon: "💕", color: "#9e6b7c" },
-  { id: "nostalgic", name: "Nostalgic", icon: "📷", color: "#8a7c6b" },
-  { id: "hopeful", name: "Hopeful", icon: "🌅", color: "#7c9e6b" },
-  { id: "mysterious", name: "Mysterious", icon: "🔮", color: "#6b5c8a" },
+  { id: "happy", name: "Happy", icon: "😊", color: emotionColor("happy") },
+  { id: "sad", name: "Sad", icon: "😢", color: emotionColor("sad") },
+  { id: "angry", name: "Angry", icon: "😠", color: emotionColor("angry") },
+  { id: "peaceful", name: "Peaceful", icon: "😌", color: emotionColor("peaceful") },
+  { id: "energetic", name: "Energetic", icon: "⚡", color: emotionColor("energetic") },
+  { id: "melancholic", name: "Melancholic", icon: "🌙", color: emotionColor("melancholic") },
+  { id: "romantic", name: "Romantic", icon: "💕", color: emotionColor("romantic") },
+  { id: "nostalgic", name: "Nostalgic", icon: "📷", color: emotionColor("nostalgic") },
+  { id: "hopeful", name: "Hopeful", icon: "🌅", color: emotionColor("hopeful") },
+  { id: "mysterious", name: "Mysterious", icon: "🔮", color: emotionColor("mysterious") },
 ];
 
 type Props = {

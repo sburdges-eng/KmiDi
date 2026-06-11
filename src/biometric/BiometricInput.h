@@ -9,6 +9,11 @@
 #include <thread>
 #include <vector>
 
+namespace kelly::biometric {
+class HealthKitBridge;
+class FitbitBridge;
+} // namespace kelly::biometric
+
 namespace kelly {
 
 /**
@@ -144,19 +149,8 @@ private:
   void readFitbitData();    // Cross-platform via API
 
   // Bridge instances for hardware integration
-  // Note: These are forward-declared in header, full definitions included in
-  // .cpp
-  class HealthKitBridge;
-  class FitbitBridge;
-  // Use void* to avoid incomplete type issues with unique_ptr in header
-  // Will be cast to proper types in implementation
-  void *healthKitBridge_;
-  void *fitbitBridge_;
-
-  // Streaming thread
-  std::thread streamingThread_;
-  std::atomic<bool> shouldStream_;
-  void streamingLoop();
+  std::unique_ptr<biometric::HealthKitBridge> healthKitBridge_;
+  std::unique_ptr<biometric::FitbitBridge> fitbitBridge_;
 
   void addToHistory(const BiometricData &data);
 

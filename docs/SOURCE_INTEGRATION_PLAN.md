@@ -1,5 +1,10 @@
 # Source Integration and Acquisition Plan (KmiDi)
 
+Historical note
+- This plan includes Tauri-era repo descriptions and should not be treated as current architecture authority.
+- Use it for source-acquisition context only.
+- When it conflicts with the current repo architecture, follow `docs/ARCHITECTURE.md`, `docs/REPO_MODULE_MAP.md`, and `AGENTS.md`.
+
 **Status:** Plan only. No implementation, no file edits beyond this doc, no downloads.  
 **Source material:** The block was provided as placeholder `[paste the full source block here]`; the 15 source items below are taken from the task list. Anything not verified from repo or from pasted source is marked UNKNOWN, UNVERIFIED, or ASSUMPTION.
 

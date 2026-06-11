@@ -9,7 +9,14 @@ option(
     OFF
 )
 
-set(PREBUILT_RUST_LIB "${CMAKE_CURRENT_SOURCE_DIR}/target/release/libintent_ir.a")
+# cargo names the staticlib per target toolchain: intent_ir.lib under
+# MSVC, libintent_ir.a everywhere else (windows Debug/Release linked
+# against the hardcoded unix name and died with LNK1104).
+if(WIN32)
+    set(PREBUILT_RUST_LIB "${CMAKE_CURRENT_SOURCE_DIR}/target/release/intent_ir.lib")
+else()
+    set(PREBUILT_RUST_LIB "${CMAKE_CURRENT_SOURCE_DIR}/target/release/libintent_ir.a")
+endif()
 set(FFI_HEADER "${CMAKE_BINARY_DIR}/include/intent_ir_ffi.h")
 set(SOURCE_FFI_HEADER "${CMAKE_SOURCE_DIR}/src/bridge/intent_ir_ffi.h")
 

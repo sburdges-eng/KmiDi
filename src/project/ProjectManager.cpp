@@ -2,8 +2,16 @@
 #include "common/Types.h"
 #include "plugin/PluginState.h" // Include PluginState for Preset type
 #include <juce_core/juce_core.h>
+#include <optional>
 
 namespace midikompanion {
+namespace {
+
+juce::DynamicObject::Ptr makeDynamicObject() {
+  return juce::DynamicObject::Ptr(new juce::DynamicObject());
+}
+
+} // namespace
 
 ProjectManager::ProjectManager() { clearError(); }
 
@@ -360,7 +368,7 @@ ProjectManager::ProjectData::fromValueTree(const juce::ValueTree &tree) {
 }
 
 juce::var ProjectManager::ProjectData::toJson() const {
-  juce::DynamicObject::Ptr obj = new juce::DynamicObject();
+  auto obj = makeDynamicObject();
 
   // Metadata
   obj->setProperty("version", juce::String(versionMajor) + "." +
@@ -371,7 +379,7 @@ juce::var ProjectManager::ProjectData::toJson() const {
 
   // Project settings
   obj->setProperty("tempo", tempo);
-  juce::DynamicObject::Ptr timeSigObj = new juce::DynamicObject();
+  auto timeSigObj = makeDynamicObject();
   timeSigObj->setProperty("numerator", timeSignature.numerator);
   timeSigObj->setProperty("denominator", timeSignature.denominator);
   obj->setProperty("timeSignature", juce::var(timeSigObj.get()));
@@ -380,7 +388,7 @@ juce::var ProjectManager::ProjectData::toJson() const {
   obj->setProperty("pluginState", pluginState.toJson());
 
   // Generated MIDI (serialize full note data for all tracks)
-  juce::DynamicObject::Ptr midiObj = new juce::DynamicObject();
+  auto midiObj = makeDynamicObject();
   midiObj->setProperty("tempoBpm", generatedMidi.tempoBpm);
   midiObj->setProperty("bars", generatedMidi.bars);
   midiObj->setProperty("key", juce::String(generatedMidi.key));
@@ -451,7 +459,7 @@ juce::var ProjectManager::ProjectData::toJson() const {
   // Vocal notes
   juce::Array<juce::var> vocalNotesArray;
   for (const auto &note : vocalNotes) {
-    juce::DynamicObject::Ptr noteObj = new juce::DynamicObject();
+    auto noteObj = makeDynamicObject();
     noteObj->setProperty("pitch", note.pitch);
     noteObj->setProperty("velocity", note.velocity);
     noteObj->setProperty("startTick", static_cast<juce::int64>(note.startTick));
@@ -754,7 +762,7 @@ ProjectManager::ProjectData::fromJson(const juce::var &json) {
 
 juce::var
 ProjectManager::serializeGeneratedMidi(const GeneratedMidi &midi) const {
-  juce::DynamicObject::Ptr obj = new juce::DynamicObject();
+  auto obj = makeDynamicObject();
 
   obj->setProperty("tempoBpm", midi.tempoBpm);
   obj->setProperty("bars", midi.bars);
@@ -799,7 +807,7 @@ bool ProjectManager::deserializeGeneratedMidi(const juce::var &json,
 }
 
 juce::var ProjectManager::serializeMidiNote(const MidiNote &note) const {
-  juce::DynamicObject::Ptr obj = new juce::DynamicObject();
+  auto obj = makeDynamicObject();
   obj->setProperty("pitch", note.pitch);
   obj->setProperty("velocity", note.velocity);
   obj->setProperty("startTick", static_cast<juce::int64>(note.startTick));
@@ -830,7 +838,7 @@ bool ProjectManager::deserializeMidiNote(const juce::var &json,
 }
 
 juce::var ProjectManager::serializeChord(const Chord &chord) const {
-  juce::DynamicObject::Ptr obj = new juce::DynamicObject();
+  auto obj = makeDynamicObject();
   obj->setProperty("symbol", juce::String(chord.symbol));
   obj->setProperty("root", juce::String(chord.root));
   obj->setProperty("quality", juce::String(chord.quality));

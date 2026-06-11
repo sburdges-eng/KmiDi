@@ -5,6 +5,16 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+# The static archives (KellyCore, penta_core, daiw_core) link into the
+# KellyFFI shared library; on Linux that requires -fPIC objects (TLS in
+# moodycamel otherwise emits local-exec relocations ld rejects for .so).
+# macOS is always PIC, so this only changes ELF builds.
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+# MSVC hides M_PI and friends behind this; harmless on glibc/libc++.
+# NOMINMAX stops windows.h from defining min/max macros that mangle
+# std::min/std::max and std::numeric_limits<>::max() in any TU that pulls
+# in Windows headers through JUCE.
+add_compile_definitions(_USE_MATH_DEFINES NOMINMAX)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
 # Options
@@ -28,6 +38,12 @@ option(BUILD_MIDI_CI_DAEMON "Build MIDI-CI microformat-to-SysEx daemon" OFF)
 option(KMIDI_ENABLE_ASAN "Enable AddressSanitizer + UndefinedBehaviorSanitizer" OFF)
 option(KMIDI_ENABLE_TSAN "Enable ThreadSanitizer (mutually exclusive with ASAN)" OFF)
 option(KMIDI_ENABLE_RTSAN "Enable LLVM RealtimeSanitizer (mutually exclusive with ASAN/TSAN; requires Clang 20+)" OFF)
+# Rust Intent IR staticlib. OFF exists for TSan certification builds: the
+# prebuilt archive leaks compiler_builtins symbols (__divdc3 etc.), so the
+# linker drags in Rust std and rust_eh_personality, overflowing the arm64
+# compact-unwind personality limit once TSan's runtime joins the link.
+# FFI builds require this ON (KellyFFI embeds the staticlib).
+option(KMIDI_ENABLE_INTENT_IR "Link the Rust Intent IR staticlib into KellyCore" ON)
 
 # KmiDi_FINAL integration options
 option(USE_KMI_DI_FINAL "Use existing KmiDi_FINAL components" OFF)
@@ -102,9 +118,12 @@ if(NOT KMIDI_BUILD_JUCE_UI)
     set(BUILD_PLUGINS OFF CACHE BOOL "Build VST3 and CLAP plugins" FORCE)
 endif()
 
-# Qt is only required when Qt-backed targets are being built.
+# Qt is only required when Qt-backed targets are being built. KellyCore and
+# the JUCE plugins include no Qt headers — the only Qt consumer is the legacy
+# desktop app (legacy/ui/qt_gui/, gated by KMIDI_BUILD_QT_UI) — so a missing
+# Qt6 must not fail configure for core/test/CI builds.
 set(KMIDI_REQUIRE_QT OFF)
-if(BUILD_KELLY_CORE OR BUILD_DESKTOP OR BUILD_PLUGINS)
+if(KMIDI_BUILD_QT_UI OR BUILD_DESKTOP)
     set(KMIDI_REQUIRE_QT ON)
 endif()
 
@@ -179,12 +198,35 @@ endif()
 add_subdirectory(src_penta-core)
 
 # ============================================================================
+# PRROT subsystem library (prrot:: voice analysis / control data)
+# ============================================================================
+# Standalone static lib (2026-06-10): prrot_bindings.cpp binds prrot::PRROTEngine,
+# so the symbols must link without KellyCore — the BUILD_KELLY_CORE=OFF headless
+# CI job hit LNK1120 on windows-latest (12 prrot::* externals). KellyCore links
+# this target below and its glob excludes src/prrot/, so the subsystem has
+# exactly one owning archive. PhonemeSegmenter/SpectralAnalyzer use
+# juce::dsp::FFT and PRROTEngine logs via penta/common/RTLogger.h; the
+# penta_core link provides both (juce_dsp is PUBLIC there). The PUBLIC src/
+# include dir resolves "prrot/*.h" to the co-located headers, matching how
+# these TUs compiled under KellyCore (src/ ahead of include/ on the path).
+file(GLOB PRROT_CORE_SOURCES CONFIGURE_DEPENDS
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/prrot/*.cpp
+)
+add_library(prrot_core STATIC ${PRROT_CORE_SOURCES})
+target_include_directories(prrot_core PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+target_link_libraries(prrot_core PUBLIC penta_core)
+
+# ============================================================================
 # Intent IR Rust crate (validation, clamping, builder)
 # ============================================================================
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/engine/intent_ir/CMakeLists.txt)
+if(KMIDI_ENABLE_INTENT_IR AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/engine/intent_ir/CMakeLists.txt)
     add_subdirectory(engine/intent_ir)
     set(KMIDI_HAS_INTENT_IR ON)
     message(STATUS "Intent IR Rust crate enabled")
+elseif(NOT KMIDI_ENABLE_INTENT_IR)
+    message(STATUS "Intent IR Rust crate disabled (KMIDI_ENABLE_INTENT_IR=OFF)")
 endif()
 
 # ============================================================================
@@ -271,6 +313,13 @@ if(NOT pybind11_FOUND)
     list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/cpp_music_brain/python/.*\\.cpp$")
     list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/python/.*\\.cpp$")
 endif()
+# intent_ir_ffi.cpp references Rust FFI symbols unconditionally; without the
+# staticlib those references would dangle in libKellyCore.a and any consumer
+# that pulls the object fails at link. Keep the object out of the archive
+# entirely when Intent IR is disabled.
+if(NOT KMIDI_ENABLE_INTENT_IR)
+    list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/bridge/intent_ir_ffi\\.cpp$")
+endif()
 # Exclude daiw-namespace files (built separately as daiw_core static lib)
 list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/dsp/audio_buffer\\.cpp$")
 list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/dsp/simd_ops\\.cpp$")
@@ -288,6 +337,27 @@ list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/audio/AudioFile\\.cpp$")
 list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/export/StemExporter\\.cpp$")
 list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/project/ProjectFile\\.cpp$")
 list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/python/groove_bindings\\.cpp$")
+
+# penta::osc ownership (2026-06-10): OSCHub/OSCServer/OSCClient implement
+# penta::osc:: classes declared in include/penta/osc/ and are compiled into
+# penta_core (src_penta-core/CMakeLists.txt appends them) so penta_core_native
+# links without KellyCore — BUILD_KELLY_CORE=OFF headless CI hit LNK1120 on
+# windows-latest. KellyCore keeps the symbols via its penta_core link;
+# excluding here prevents duplicate definitions across the two archives.
+list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/osc/OSCClient\\.cpp$")
+list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/osc/OSCHub\\.cpp$")
+list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/osc/OSCServer\\.cpp$")
+
+# prrot:: ownership (2026-06-10): src/prrot/ builds as the standalone
+# prrot_core static lib (defined above) so penta_core_native links without
+# KellyCore. KellyCore keeps the symbols via its prrot_core link below.
+list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/prrot/.*\\.cpp$")
+
+# penta::harmony::VoiceLeading (2026-06-10): referenced by penta_core's own
+# HarmonyEngine.cpp — the remaining 2 LNK2001 externals in the same headless
+# job. The impl now compiles into penta_core (src_penta-core/CMakeLists.txt
+# appends it); KellyCore keeps the symbols via its penta_core link.
+list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/harmony/VoiceLeading\\.cpp$")
 
 # Intra-library ODR fixes 2026-04-14 (caught by scripts/audit/intra_lib_odr_scan.py):
 #   - src/core/emotion_thesaurus.cpp is a self-labeled legacy stub from
@@ -341,10 +411,21 @@ target_link_libraries(KellyCore PUBLIC
     readerwriterqueue
     concurrentqueue
     penta_core
+    prrot_core
 )
 # Link Rust Intent IR if available
 if(KMIDI_HAS_INTENT_IR)
     target_link_libraries(KellyCore PUBLIC ${INTENT_IR_RUST_ARCHIVE})
+    if(WIN32)
+        # Rust std's Windows runtime imports (ntdll Nt*, userenv
+        # GetUserProfileDirectoryW, bcrypt randomness, winsock, WaitOnAddress).
+        # cargo adds these automatically when rustc drives the final link;
+        # MSVC drives ours, so the import libs must be explicit. PUBLIC so
+        # every consumer of the archive (KellyFFI.dll, test exes) inherits.
+        target_link_libraries(KellyCore PUBLIC
+            ntdll userenv bcrypt ws2_32 synchronization
+        )
+    endif()
     add_dependencies(KellyCore intent_ir_rust_lib)
     target_compile_definitions(KellyCore PRIVATE INTENT_IR_RUST_AVAILABLE)
     message(STATUS "KellyCore: Intent IR Rust linkage enabled (${INTENT_IR_RUST_ARCHIVE})")
@@ -622,6 +703,9 @@ endif()
 # Kelly FFI Library (for Tauri integration)
 # ============================================================================
 option(BUILD_KELLY_FFI "Build Kelly FFI library for external language bindings" ON)
+if(BUILD_KELLY_FFI AND BUILD_KELLY_CORE AND NOT KMIDI_ENABLE_INTENT_IR)
+    message(FATAL_ERROR "BUILD_KELLY_FFI requires KMIDI_ENABLE_INTENT_IR=ON (KellyFFI embeds the Rust intent_ir staticlib)")
+endif()
 
 if(BUILD_KELLY_FFI AND BUILD_KELLY_CORE)
     add_library(KellyFFI SHARED
@@ -647,12 +731,15 @@ if(BUILD_KELLY_FFI AND BUILD_KELLY_CORE)
     # the top-level scope. PRIVATE keeps it out of the C ABI consumer surface.
     find_package(Python3 COMPONENTS Development QUIET)
     target_link_libraries(KellyFFI PRIVATE KellyCore
-        Qt6::Core
-        Qt6::Widgets
         juce::juce_audio_basics
         juce::juce_core
         $<$<TARGET_EXISTS:Python3::Python>:Python3::Python>
     )
+    # Qt is linked only when Qt-backed targets are enabled; no KellyFFI or
+    # KellyCore source includes Qt headers, so this stays PRIVATE-and-optional.
+    if(KMIDI_REQUIRE_QT)
+        target_link_libraries(KellyFFI PRIVATE Qt6::Core Qt6::Widgets)
+    endif()
     
     # Avoid JUCE debug static initializer (JuceVersionPrinter) in the dylib to
     # prevent any cross-boundary string ops during load.
@@ -675,7 +762,19 @@ if(BUILD_KELLY_FFI AND BUILD_KELLY_CORE)
             INSTALL_NAME_DIR "@rpath"
         )
     endif()
-    
+
+    # Windows: the C ABI headers rely on unix default visibility, so MSVC
+    # exports nothing — and with zero exports link.exe emits no KellyFFI.lib
+    # import library, failing every consumer with LNK1181. The curated .def
+    # is the export mechanism AND the machine-enforced narrow ABI (Pass F):
+    # only listed symbols leave the DLL. CMake passes .def sources to the
+    # linker (/DEF:) automatically. Do NOT use WINDOWS_EXPORT_ALL_SYMBOLS —
+    # the statically embedded JUCE+KellyCore+penta would exceed the 64K
+    # export limit and shatter the narrow-ABI rule.
+    if(WIN32)
+        target_sources(KellyFFI PRIVATE src/bridge/KellyFFI.def)
+    endif()
+
     # Install FFI library
     install(TARGETS KellyFFI
         RUNTIME DESTINATION bin
@@ -718,8 +817,12 @@ endif()
 
 # Tests
 if(BUILD_TESTS AND BUILD_KELLY_CORE)
+    # Register tests with CTest unconditionally. The standalone RT/DSP tests
+    # below are designed to run without Catch2 (and even without JUCE), so
+    # enable_testing() must run before their add_test() calls regardless of
+    # whether the optional Catch2-based tests are present.
+    enable_testing()
     if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/external/Catch2/CMakeLists.txt)
-        enable_testing()
         add_subdirectory(external/Catch2 EXCLUDE_FROM_ALL)
         include(CTest)
         include(Catch2)
@@ -757,6 +860,43 @@ if(BUILD_TESTS AND BUILD_KELLY_CORE)
         catch_discover_tests(EmotionSchemaTests)
     else()
         message(WARNING "Catch2 not found; skipping tests. Set BUILD_TESTS=OFF or add external/Catch2.")
+    endif()
+
+    # Runtime contract tests — Catch2 executable exercising the kelly_* C ABI
+    # through KellyFFI ONLY. Executables linking KellyFFI must not also link
+    # JUCE or KellyCore: KellyFFI links both PRIVATE, and a second JUCE copy
+    # in the exe causes allocator mismatch (see KellyFFI target comment).
+    # Catch2 comes from vendored external/Catch2 when present (block above),
+    # otherwise it is fetched — mirroring the googletest FetchContent in the
+    # BUILD_PENTA_TESTS block.
+    if(TARGET KellyFFI)
+        if(NOT TARGET Catch2::Catch2WithMain AND NOT KMIDI_OFFLINE_BUILD)
+            include(FetchContent)
+            FetchContent_Declare(
+                Catch2
+                GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+                GIT_TAG v3.5.2
+                GIT_SHALLOW TRUE
+            )
+            FetchContent_MakeAvailable(Catch2)
+        endif()
+        if(TARGET Catch2::Catch2WithMain)
+            add_executable(runtime_contract_tests
+                tests/cpp/test_kelly_ffi.cpp
+            )
+            target_compile_features(runtime_contract_tests PRIVATE cxx_std_20)
+            find_package(Threads REQUIRED)
+            target_link_libraries(runtime_contract_tests PRIVATE
+                KellyFFI
+                Catch2::Catch2WithMain
+                Threads::Threads
+            )
+            if(COMMAND add_test)
+                add_test(NAME runtime_contract_tests COMMAND runtime_contract_tests)
+            endif()
+        else()
+            message(WARNING "runtime_contract_tests skipped: Catch2 unavailable (vendor external/Catch2 or allow FetchContent)")
+        endif()
     endif()
 
     # RTState seqlock torture test — no Catch2, no KellyCore, no JUCE.
@@ -858,6 +998,47 @@ if(BUILD_TESTS AND BUILD_KELLY_CORE)
     if(COMMAND add_test)
         add_test(NAME SIMDKernelsTest COMMAND SIMDKernelsTest)
     endif()
+
+    # MultiModelProcessor lifecycle/ownership test — standalone main, links
+    # KellyCore (juce_core arrives transitively via KellyCore's PUBLIC links,
+    # so the executable must not link JUCE modules directly).
+    add_executable(MultiModelProcessorTest
+        tests/cpp/test_multi_model_processor.cpp
+    )
+    target_link_libraries(MultiModelProcessorTest PRIVATE KellyCore)
+    target_include_directories(MultiModelProcessorTest PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+    )
+    target_compile_features(MultiModelProcessorTest PRIVATE cxx_std_20)
+    if(COMMAND add_test)
+        add_test(NAME MultiModelProcessorTest COMMAND MultiModelProcessorTest)
+        # Lifecycle torture must never wedge an overnight ctest run.
+        set_tests_properties(MultiModelProcessorTest PROPERTIES TIMEOUT 120)
+    endif()
+
+    # Instrument the test executables with whichever sanitizer is active so the
+    # ctest gate runs under the same ASan/UBSan/TSan/RTSan as the KellyCore
+    # build. Guarded by TARGET so Catch2-only targets are skipped when absent.
+    if(KMIDI_ENABLE_ASAN OR KMIDI_ENABLE_TSAN OR KMIDI_ENABLE_RTSAN)
+        include(Sanitizers)
+        foreach(_kmidi_test_tgt
+                AudioEmotionRunnerTests EmotionSchemaTests
+                runtime_contract_tests
+                RTStateSeqlockTest RTEventSchedulerTest DSPGraphTest
+                GpuSchedulerTest SharedIpcTest SIMDKernelsTest
+                MultiModelProcessorTest)
+            if(TARGET ${_kmidi_test_tgt})
+                if(KMIDI_ENABLE_ASAN)
+                    enable_sanitizers(${_kmidi_test_tgt})
+                elseif(KMIDI_ENABLE_TSAN)
+                    enable_thread_sanitizer(${_kmidi_test_tgt})
+                else()
+                    enable_realtime_sanitizer(${_kmidi_test_tgt})
+                endif()
+            endif()
+        endforeach()
+    endif()
 endif()
 
 # DSP core testing (if using KmiDi_FINAL)
@@ -888,8 +1069,9 @@ if(BUILD_PENTA_TESTS)
         add_subdirectory(tests/penta_core)
     else()
         message(STATUS
-            "BUILD_PENTA_TESTS=ON but tests/penta_core/ is absent; "
-            "googletest is fetched but no top-level penta_core test target is added.")
+            "tests/penta_core/ has no standalone CMakeLists.txt; the "
+            "penta_tests target is built from tests/penta_core/*.cpp by "
+            "src_penta-core/CMakeLists.txt instead.")
     endif()
 endif()
 

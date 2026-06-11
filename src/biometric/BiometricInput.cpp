@@ -1,11 +1,10 @@
 #include "biometric/BiometricInput.h"
-// Include bridge headers to provide complete types for unique_ptr
-// Note: HealthKitBridge is disabled (requires Objective-C++)
-// FitbitBridge should be available
+// Bridge headers must be included unconditionally: the unique_ptr members
+// need complete types in this TU, and HealthKitBridge.h self-stubs on
+// non-Apple platforms. Guarding the include on HEALTHKIT_AVAILABLE can
+// never work — that macro is defined inside HealthKitBridge.h itself.
 #include "biometric/FitbitBridge.h"
-#if HEALTHKIT_AVAILABLE
 #include "biometric/HealthKitBridge.h"
-#endif
 #include <algorithm>
 #include <chrono>
 #include <cmath>
@@ -20,23 +19,13 @@ BiometricInput::~BiometricInput() {
   if (streamingActive_) {
     stopStreaming();
   }
-
-  // Clean up bridge instances
-#if HEALTHKIT_AVAILABLE
-  if (healthKitBridge_) {
-    delete static_cast<biometric::HealthKitBridge *>(healthKitBridge_);
-  }
-#endif
-  if (fitbitBridge_) {
-    delete static_cast<biometric::FitbitBridge *>(fitbitBridge_);
-  }
 }
 
 BiometricInput::BiometricInput()
     : adaptiveNormalization_(false), enabled_(false), streamingActive_(false),
       lastReadingTime_(0.0), healthKitInitialized_(false),
       fitbitInitialized_(false), healthKitBridge_(nullptr),
-      fitbitBridge_(nullptr), shouldStream_(false) {
+      fitbitBridge_(nullptr) {
   dataHistory_.reserve(HISTORY_SIZE);
 
   // Initialize default baseline
@@ -268,10 +257,10 @@ void BiometricInput::setBaseline(const BiometricData &baseline) {
 bool BiometricInput::initializeHealthKit() {
 #if HEALTHKIT_AVAILABLE && (JUCE_MAC || JUCE_IOS)
   if (!healthKitBridge_) {
-    healthKitBridge_ = new biometric::HealthKitBridge();
+    healthKitBridge_ = std::make_unique<biometric::HealthKitBridge>();
   }
 
-  auto *bridge = static_cast<biometric::HealthKitBridge *>(healthKitBridge_);
+  auto *bridge = healthKitBridge_.get();
   if (!bridge->isAvailable()) {
     healthKitInitialized_ = false;
     return false;

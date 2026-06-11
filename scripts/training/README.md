@@ -1,5 +1,9 @@
 # 🚀 KmiDi Neural Model Training Sessions
 
+Historical note
+- This training guide is not current app-shell or runnable-command authority for the main repo.
+- Any references below to Tauri app launch/testing should be treated as historical unless revalidated against the active `package.json`, `README.md`, and `docs/DEVELOPMENT.md`.
+
 ## Overview
 
 This directory contains complete training configurations for two primary paths:

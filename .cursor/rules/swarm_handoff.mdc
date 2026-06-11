@@ -1,0 +1,84 @@
+---
+description: Handoff rule for multi-stack KmiDi feature requests (Hermes Tmux Matrix v3)
+globs: *
+alwaysApply: false
+---
+
+# Hermes Tmux Matrix — Swarm Handoff Rule (v3, Hermes-as-conductor)
+
+When the user requests a multi-stack KmiDi feature that touches **two or more** of:
+Rust intent_ir, C++ engine / KellyFFI / KellyCore, React UI in `src/`, or Python `music_brain` API —
+**you MUST NOT code directly**. Hand off to the swarm.
+
+## Architecture
+
+```
+USER REQUEST
+     |
+     v
+[ hermes -z DECOMPOSE ]   <- backbone memory brain (provider routing via hermes auth pool)
+     |
+     v
+{ rust: "...", cpp: "...", react: "...", schemas: "..." }
+     |
+     +--> codex exec       (Rust, fallback claude -p)
+     +--> claude -p        (C++,  fallback cursor-agent -p)
+     +--> cursor-agent -p  (React, fallback claude -p)
+     +--> gemini -p        (schemas one-shot)
+              |
+              v
+       tmux build pane (cargo / cmake / npm)
+              |
+              v
+       on FAILED -> [ hermes -z HEAL ]   <- regenerates fix prompt with full attempt history
+              |
+              v
+       on SUCCESS -> [ hermes -z SYNTHESIZE ]   <- writes Active_Plan.md
+```
+
+Hermes thinks (decompose, heal, synthesize). The specialist CLIs execute (write code, exit).
+
+## Stack specialization
+
+| Stack | Primary CLI | Fallback CLI | Auth |
+|---|---|---|---|
+| Rust intent_ir | `codex exec` | `claude -p` | Codex login |
+| C++ engine     | `claude -p` | `cursor-agent -p` | Claude Pro/Max |
+| React UI       | `cursor-agent -p` | `claude -p` | Cursor Pro |
+| Schema map (one-shot) | `gemini -p` | — | Google account |
+| Conductor / memory brain | `hermes -z` | (handles its own provider fallback) | `hermes auth` pool |
+
+The Phoenix Protocol (3 retries → CLI swap → `git checkout -- .` → final retry) still governs each stack. Hermes regenerates the fix prompt at every retry, carrying memory of all prior attempts in that stack.
+
+## Handoff procedure
+
+1. Tell the user (one message):
+   - "Ensure the Tmux matrix is running (`./scripts/init_matrix.sh`)."
+   - "Verify Hermes auth: `hermes status` — at least one provider must show ✓ logged in."
+   - "Verify each stack CLI is logged in: `cursor-agent status`, `claude /login`, `codex login`, `gemini`."
+2. Trigger the swarm silently in your terminal:
+   ```bash
+   python scripts/kmidi_swarm.py "<verbatim user request>"
+   ```
+3. Tell the user to monitor iTerm2 — window 0 (overview) shows Hermes phase markers, windows 2/3/6 show live builds.
+4. Wait for `../kmidi-agent-workspace/Obsidian_Vault/Master_Plans/Active_Plan.md` to be written. Hermes synthesizes this in phase 3; do not preempt it.
+5. Read `Active_Plan.md` and `Obsidian_Vault/01_Context/schemas.md` from the worktree.
+6. Summarize:
+   - Which stacks Hermes routed to which CLI (note any AMNESIA RESET swaps).
+   - The schema delta from gemini.
+   - Hermes's "next actions for the human reviewer" section.
+7. Prompt the user to Fast-Apply changes from `../kmidi-agent-workspace` (branch `feature/agent-swarm`). Do NOT auto-merge or auto-push.
+
+## When NOT to use the swarm
+
+- Single-stack edits (just edit normally).
+- Pure refactors with no new behavior.
+- Anything inside `KmiDi_FINAL/` or `KmiDi_PROJECT/` (legacy trees).
+- Schema-only edits (run `python3 scripts/sync_entities.py` instead).
+
+## Safety invariants
+
+- The swarm operates only in `../kmidi-agent-workspace`. It never edits the user's primary checkout.
+- The Phoenix Protocol's revert step is `git restore --staged . && git checkout -- .` scoped to the worktree.
+- Hermes runs with `--yolo --accept-hooks` in headless one-shot mode. It loads CWD's `AGENTS.md` automatically; the user's `hermes auth` pool handles all provider routing/quotas. No raw API keys are read by the swarm script.
+- No commits, pushes, or PRs are created automatically. The user reviews and applies.

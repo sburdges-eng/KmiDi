@@ -75,6 +75,7 @@ Wound convertLegacyToKellyTypesWound(const Wound &legacy) {
 #endif
 #if defined(__unix__) || defined(__APPLE__)
 #include <unistd.h>
+#include <optional>
 #endif
 
 using namespace kelly::MusicConstants;
@@ -765,7 +766,8 @@ void PluginProcessor::processBlock(juce::AudioBuffer<float> &buffer,
 }
 
 juce::AudioProcessorEditor *PluginProcessor::createEditor() {
-  return new kelly::PluginEditor(*this);
+  auto editor = std::make_unique<kelly::PluginEditor>(*this);
+  return editor.release();
 }
 
 void PluginProcessor::getStateInformation(juce::MemoryBlock &destData) {

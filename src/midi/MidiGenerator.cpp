@@ -9,6 +9,7 @@
 #include <juce_core/juce_core.h>
 #include <numeric>
 #include <sstream>
+#include <optional>
 
 namespace kelly {
 using namespace MusicConstants;

@@ -32,6 +32,7 @@
 #include <atomic>
 #include <cmath>
 #include <cstdint>
+#include <cstddef>
 
 namespace penta {
 namespace mixer {

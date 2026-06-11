@@ -3,274 +3,307 @@
 
 // Python C API - only include if Python is available
 #ifdef PYTHON_AVAILABLE
-#include <Python.h>
 #include "bridge/PyGILGuard.h"
+#include <Python.h>
 #endif
 
+#include <atomic>
+#include <chrono>
 #include <iostream>
+#include <memory>
 #include <sstream>
 #include <thread>
-#include <chrono>
-#include <atomic>
-#include <memory>
 
 namespace kelly {
+
+#ifdef PYTHON_AVAILABLE
+namespace {
+
+struct PyObjectDecref {
+  void operator()(PyObject *obj) const noexcept {
+    if (obj) {
+      Py_DECREF(obj);
+    }
+  }
+};
+
+using PyOwnedObject = std::unique_ptr<PyObject, PyObjectDecref>;
+
+PyOwnedObject makePyOwned(PyObject *obj) { return PyOwnedObject(obj); }
+
+} // namespace
+#endif
 
 // Worker thread for processing state updates
 class StateBridge::StateWorkerThread {
 public:
-    StateWorkerThread(StateBridge* bridge)
-        : bridge_(bridge)
-        , running_(true)
-        , thread_(&StateWorkerThread::run, this)
-    {}
+  StateWorkerThread(StateBridge *bridge)
+      : bridge_(bridge), running_(true),
+        thread_(&StateWorkerThread::run, this) {}
 
-    ~StateWorkerThread() {
-        running_ = false;
-        if (thread_.joinable()) {
-            thread_.join();
-        }
+  ~StateWorkerThread() {
+    running_.store(false, std::memory_order_release);
+    if (thread_.joinable()) {
+      thread_.join();
     }
+  }
 
 private:
-    StateBridge* bridge_;
-    std::atomic<bool> running_;
-    std::thread thread_;
+  StateBridge *bridge_;
+  std::atomic<bool> running_;
+  std::thread thread_;
 
-    void run() {
-        while (running_ && !bridge_->shutdownRequested_.load()) {
-            bridge_->processStateQueue();
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        }
+  void run() {
+    while (running_ && !bridge_->shutdownRequested_.load()) {
+      bridge_->processStateQueue();
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
+  }
 };
 
 StateBridge::StateBridge()
-    : available_(false)
-    , shutdownRequested_(false)
-    , emitStateFunc_(nullptr)
-    , getCurrentStateFunc_(nullptr)
-    , getEngineStateFunc_(nullptr)
-    , stateQueue_(std::make_unique<moodycamel::ConcurrentQueue<StateUpdate>>(256))
-    , workerThread_(nullptr)
-{
-}
+    : available_(false), shutdownRequested_(false), emitStateFunc_(nullptr),
+      getCurrentStateFunc_(nullptr), getEngineStateFunc_(nullptr),
+      stateQueue_(
+          std::make_unique<moodycamel::ConcurrentQueue<StateUpdate>>(256)),
+      workerThread_(nullptr) {}
 
-StateBridge::~StateBridge() {
-    shutdown();
-}
+StateBridge::~StateBridge() { shutdown(); }
 
 bool StateBridge::initialize() {
-    available_ = initializePython();
-    if (available_) {
-        workerThread_ = std::make_unique<StateWorkerThread>(this);
-    }
-    return available_;
+  if (workerThread_ && available_.load()) {
+    return true;
+  }
+
+  shutdownRequested_.store(false);
+  available_ = initializePython();
+  if (available_) {
+    workerThread_ = std::make_unique<StateWorkerThread>(this);
+  }
+  return available_;
 }
 
 void StateBridge::shutdown() {
-    shutdownRequested_ = true;
+  const bool wasRequested = shutdownRequested_.exchange(true);
 
-    if (workerThread_) {
-        workerThread_.reset();
-    }
+  if (workerThread_) {
+    workerThread_.reset();
+  }
 
-    // Flush remaining updates
+  // Flush remaining updates exactly once on the active shutdown path.
+  if (!wasRequested) {
     flush();
+  }
 
-    shutdownPython();
-    available_ = false;
+  shutdownPython();
+  available_ = false;
 }
 
 bool StateBridge::initializePython() {
 #ifdef PYTHON_AVAILABLE
-    // Delegate Py_Initialize + PyEval_SaveThread to the shared, thread-safe
-    // helper.  This eliminates the race where two bridges constructed on
-    // different threads both observe !Py_IsInitialized() and both call
-    // PyEval_SaveThread (second call is UB).
-    if (!bridge::PythonBridgeBase::ensurePythonStarted()) {
-        std::cerr << "StateBridge: Python init failed\n";
-        return false;
-    }
-
-    // From this point on any Py* call (including PyImport_ImportModule below)
-    // requires the GIL because ensurePythonStarted() has released it.
-    bridge::PyGILGuard gil;
-
-    // Import the state bridge module
-    PyObject* module = PyImport_ImportModule("music_brain.intelligence.state_bridge");
-    if (!module) {
-        PyErr_Print();
-        std::cerr << "StateBridge: Failed to import state_bridge module" << std::endl;
-        return false;
-    }
-
-    // Get function pointers
-    emitStateFunc_ = PyObject_GetAttrString(module, "emit_state_update");
-    getCurrentStateFunc_ = PyObject_GetAttrString(module, "get_current_state");
-    getEngineStateFunc_ = PyObject_GetAttrString(module, "get_engine_state");
-
-    Py_DECREF(module);
-
-    // emitStateFunc is the most important one
-    if (!emitStateFunc_) {
-        std::cerr << "StateBridge: Failed to get emit_state_update function" << std::endl;
-        return false;
-    }
-
-    return true;
-#else
-    // Python not available - bridge will use fallback
-    std::cerr << "StateBridge: Python not available, state synchronization disabled" << std::endl;
+  // Delegate Py_Initialize + PyEval_SaveThread to the shared, thread-safe
+  // helper.  This eliminates the race where two bridges constructed on
+  // different threads both observe !Py_IsInitialized() and both call
+  // PyEval_SaveThread (second call is UB).
+  if (!bridge::PythonBridgeBase::ensurePythonStarted()) {
+    std::cerr << "StateBridge: Python init failed\n";
     return false;
+  }
+
+  // From this point on any Py* call (including PyImport_ImportModule below)
+  // requires the GIL because ensurePythonStarted() has released it.
+  bridge::PyGILGuard gil;
+
+  // Import the state bridge module
+  PyObject *module =
+      PyImport_ImportModule("music_brain.intelligence.state_bridge");
+  if (!module) {
+    PyErr_Print();
+    std::cerr << "StateBridge: Failed to import state_bridge module"
+              << std::endl;
+    return false;
+  }
+
+  // Get function pointers
+  emitStateFunc_ = PyObject_GetAttrString(module, "emit_state_update");
+  getCurrentStateFunc_ = PyObject_GetAttrString(module, "get_current_state");
+  getEngineStateFunc_ = PyObject_GetAttrString(module, "get_engine_state");
+
+  Py_DECREF(module);
+
+  // emitStateFunc is the most important one
+  if (!emitStateFunc_) {
+    std::cerr << "StateBridge: Failed to get emit_state_update function"
+              << std::endl;
+    return false;
+  }
+
+  return true;
+#else
+  // Python not available - bridge will use fallback
+  std::cerr
+      << "StateBridge: Python not available, state synchronization disabled"
+      << std::endl;
+  return false;
 #endif
 }
 
 void StateBridge::shutdownPython() {
 #ifdef PYTHON_AVAILABLE
-    if (Py_IsInitialized()) {
-        bridge::PyGILGuard gil;  // safe: interpreter is alive; must hold GIL for Py_DECREF
-        if (emitStateFunc_) {
-            Py_DECREF(static_cast<PyObject*>(emitStateFunc_));
-            emitStateFunc_ = nullptr;
-        }
-        if (getCurrentStateFunc_) {
-            Py_DECREF(static_cast<PyObject*>(getCurrentStateFunc_));
-            getCurrentStateFunc_ = nullptr;
-        }
-        if (getEngineStateFunc_) {
-            Py_DECREF(static_cast<PyObject*>(getEngineStateFunc_));
-            getEngineStateFunc_ = nullptr;
-        }
-    } else {
-        // Interpreter already finalized — just null the pointers; Py_DECREF is UB here.
-        emitStateFunc_ = nullptr;
-        getCurrentStateFunc_ = nullptr;
-        getEngineStateFunc_ = nullptr;
+  if (Py_IsInitialized()) {
+    bridge::PyGILGuard
+        gil; // safe: interpreter is alive; must hold GIL for Py_DECREF
+    if (emitStateFunc_) {
+      Py_DECREF(static_cast<PyObject *>(emitStateFunc_));
+      emitStateFunc_ = nullptr;
     }
+    if (getCurrentStateFunc_) {
+      Py_DECREF(static_cast<PyObject *>(getCurrentStateFunc_));
+      getCurrentStateFunc_ = nullptr;
+    }
+    if (getEngineStateFunc_) {
+      Py_DECREF(static_cast<PyObject *>(getEngineStateFunc_));
+      getEngineStateFunc_ = nullptr;
+    }
+  } else {
+    // Interpreter already finalized — just null the pointers; Py_DECREF is UB
+    // here.
+    emitStateFunc_ = nullptr;
+    getCurrentStateFunc_ = nullptr;
+    getEngineStateFunc_ = nullptr;
+  }
 #endif
 }
 
-void StateBridge::emitStateUpdate(
-    const std::string& engineType,
-    const std::string& stateJson
-) {
-    if (!available_.load() || shutdownRequested_.load()) {
-        return;
-    }
+void StateBridge::emitStateUpdate(const std::string &engineType,
+                                  const std::string &stateJson) {
+  if (!available_.load() || shutdownRequested_.load()) {
+    return;
+  }
 
-    // Add to queue (lock-free for audio thread safety)
-    StateUpdate update;
-    update.engineType = engineType;
-    update.stateJson = stateJson;
-    update.timestamp = std::chrono::steady_clock::now();
-    stateQueue_->try_enqueue(update);
+  // Add to queue (lock-free for audio thread safety)
+  StateUpdate update;
+  update.engineType = engineType;
+  update.stateJson = stateJson;
+  update.timestamp = std::chrono::steady_clock::now();
+  stateQueue_->try_enqueue(update);
 }
 
 std::string StateBridge::getCurrentState() {
-    if (!available_.load() || !getCurrentStateFunc_) {
-        return "{}";
-    }
+  if (!available_.load() || !getCurrentStateFunc_) {
+    return "{}";
+  }
 
 #ifdef PYTHON_AVAILABLE
-    bridge::PyGILGuard gil;  // must hold GIL for all Py* calls
-    PyObject* func = static_cast<PyObject*>(getCurrentStateFunc_);
-    PyObject* result = PyObject_CallObject(func, nullptr);
+  bridge::PyGILGuard gil; // must hold GIL for all Py* calls
+  PyObject *func = static_cast<PyObject *>(getCurrentStateFunc_);
+  auto result = makePyOwned(PyObject_CallObject(func, nullptr));
 
-    if (!result) {
-        PyErr_Clear();
-        return "{}";
-    }
-
-    std::string resultStr;
-    if (PyUnicode_Check(result)) {
-        const char* cstr = PyUnicode_AsUTF8(result);
-        resultStr = cstr ? cstr : "{}";
-    } else {
-        resultStr = "{}";
-    }
-
-    Py_DECREF(result);
-    return resultStr;
-#else
+  if (!result) {
+    PyErr_Clear();
     return "{}";
+  }
+
+  std::string resultStr;
+  if (PyUnicode_Check(result.get())) {
+    const char *cstr = PyUnicode_AsUTF8(result.get());
+    resultStr = cstr ? cstr : "{}";
+  } else {
+    resultStr = "{}";
+  }
+
+  return resultStr;
+#else
+  return "{}";
 #endif
 }
 
-std::string StateBridge::getEngineState(const std::string& engineType) {
-    if (!available_.load() || !getEngineStateFunc_) {
-        return "{}";
-    }
+std::string StateBridge::getEngineState(const std::string &engineType) {
+  if (!available_.load() || !getEngineStateFunc_) {
+    return "{}";
+  }
 
 #ifdef PYTHON_AVAILABLE
-    bridge::PyGILGuard gil;  // must hold GIL for all Py* calls
-    PyObject* func = static_cast<PyObject*>(getEngineStateFunc_);
-    PyObject* args = PyTuple_New(1);
-    PyTuple_SetItem(args, 0, PyUnicode_FromString(engineType.c_str()));
-
-    PyObject* result = PyObject_CallObject(func, args);
-    Py_DECREF(args);
-
-    if (!result) {
-        PyErr_Clear();
-        return "{}";
-    }
-
-    std::string resultStr;
-    if (PyUnicode_Check(result)) {
-        const char* cstr = PyUnicode_AsUTF8(result);
-        resultStr = cstr ? cstr : "{}";
-    } else {
-        resultStr = "{}";
-    }
-
-    Py_DECREF(result);
-    return resultStr;
-#else
+  bridge::PyGILGuard gil; // must hold GIL for all Py* calls
+  PyObject *func = static_cast<PyObject *>(getEngineStateFunc_);
+  auto args = makePyOwned(PyTuple_New(1));
+  if (!args) {
     return "{}";
+  }
+  auto engineTypeObj = makePyOwned(PyUnicode_FromString(engineType.c_str()));
+  if (!engineTypeObj) {
+    return "{}";
+  }
+  PyTuple_SetItem(args.get(), 0, engineTypeObj.release());
+
+  auto result = makePyOwned(PyObject_CallObject(func, args.get()));
+
+  if (!result) {
+    PyErr_Clear();
+    return "{}";
+  }
+
+  std::string resultStr;
+  if (PyUnicode_Check(result.get())) {
+    const char *cstr = PyUnicode_AsUTF8(result.get());
+    resultStr = cstr ? cstr : "{}";
+  } else {
+    resultStr = "{}";
+  }
+
+  return resultStr;
+#else
+  return "{}";
 #endif
 }
 
-void StateBridge::flush() {
-    processStateQueue();
-}
+void StateBridge::flush() { processStateQueue(); }
 
 void StateBridge::processStateQueue() {
-    if (!available_.load() || !emitStateFunc_) {
-        return;
+  if (!available_.load() || !emitStateFunc_) {
+    return;
+  }
+
+  // Process up to 10 updates per call (batch processing)
+  int processed = 0;
+  const int MAX_BATCH = 10;
+
+  while (processed < MAX_BATCH) {
+    StateUpdate update;
+    if (!stateQueue_->try_dequeue(update)) {
+      break;
     }
-
-    // Process up to 10 updates per call (batch processing)
-    int processed = 0;
-    const int MAX_BATCH = 10;
-
-    while (processed < MAX_BATCH) {
-        StateUpdate update;
-        if (!stateQueue_->try_dequeue(update)) {
-            break;
-        }
 
 #ifdef PYTHON_AVAILABLE
-        {
-            bridge::PyGILGuard gil;  // acquire GIL for this Python call only
-            PyObject* func = static_cast<PyObject*>(emitStateFunc_);
-            PyObject* args = PyTuple_New(2);
-            PyTuple_SetItem(args, 0, PyUnicode_FromString(update.engineType.c_str()));
-            PyTuple_SetItem(args, 1, PyUnicode_FromString(update.stateJson.c_str()));
+    {
+      bridge::PyGILGuard gil; // acquire GIL for this Python call only
+      PyObject *func = static_cast<PyObject *>(emitStateFunc_);
+      auto args = makePyOwned(PyTuple_New(2));
+      if (!args) {
+        processed++;
+        continue;
+      }
+      auto engineTypeObj =
+          makePyOwned(PyUnicode_FromString(update.engineType.c_str()));
+      auto stateJsonObj =
+          makePyOwned(PyUnicode_FromString(update.stateJson.c_str()));
+      if (!engineTypeObj || !stateJsonObj) {
+        processed++;
+        continue;
+      }
+      PyTuple_SetItem(args.get(), 0, engineTypeObj.release());
+      PyTuple_SetItem(args.get(), 1, stateJsonObj.release());
 
-            PyObject* result = PyObject_CallObject(func, args);
-            Py_DECREF(args);
+      auto result = makePyOwned(PyObject_CallObject(func, args.get()));
 
-            if (result) {
-                Py_DECREF(result);
-            } else {
-                PyErr_Clear();  // Clear error - state updates are not critical
-            }
-        }
+      if (!result) {
+        PyErr_Clear(); // Clear error - state updates are not critical
+      }
+    }
 #endif
 
-        processed++;
-    }
+    processed++;
+  }
 }
 
 } // namespace kelly

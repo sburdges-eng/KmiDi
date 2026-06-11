@@ -1,5 +1,11 @@
 # Whole-Repository Code Review — KmiDi / iDAW
 
+Historical note
+- This review preserves a Tauri-era architecture reading and is not a current authority document.
+- Use it as historical analysis only.
+- Treat commands and shell classifications below, including `npm run dev:tauri`, as historical/legacy unless revalidated against the current repo scripts.
+- When it conflicts with the current repo architecture, follow the 2026 authority set beginning with `docs/ARCHITECTURE.md`.
+
 Evidence-bound code review: React/Vite frontend, FastAPI Music Brain API, Tauri/Rust shell, C++ (KellyCore/KellyFFI). Zero tolerance for hallucinated findings; every finding has file path, line numbers, scenario, impact, and minimal fix.
 
 ---
@@ -29,7 +35,7 @@ Evidence-bound code review: React/Vite frontend, FastAPI Music Brain API, Tauri/
 |------------|------|-----|
 | Frontend | `src/main.tsx` | Mounts AppConsole (not App.tsx) |
 | API | `music_brain/api.py` | `uvicorn music_brain.api:app` or `python -m music_brain.api` (host 127.0.0.1 in _main()) |
-| Tauri | `engine/intent_ir/src/lib.rs` (run) / `main.rs` (binary) | `npm run dev:tauri` / `npm run tauri build` |
+| Historical Tauri shell | `engine/intent_ir/` | historical/legacy review-era shell path; `npm run dev:tauri` and `npm run tauri build` are not present in the current `package.json` |
 | Schema sync | `scripts/sync_entities.py` | Updates Intent.ts, intent.rs, Python from shared_schemas |
 
 ### Important data flows

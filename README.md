@@ -1,54 +1,156 @@
 # KmiDi Canonical Repository
 
-`KmiDi/` is the active canonical workspace for the KmiDi product line.
+Status: current repo entrypoint aligned to the 2026 architecture authority set
+Last updated: 2026-06-08
 
-## Canonical UI Surface (V1)
+KmiDi is a plugin-first, engine-separable AI-assisted music creation system.
+The current canonical architecture authority begins with:
+- `docs/ARCHITECTURE.md`
+- `docs/REPO_MODULE_MAP.md`
+- `docs/INTENT_IR_AUTHORITY.md`
+- `docs/NATIVE_RUNTIME_OWNERSHIP.md`
+- `docs/JUCE_RT_RULES.md`
+- `docs/FFI_OWNERSHIP_AND_ABI.md`
+- `docs/PERSISTENCE_AND_MIGRATION.md`
 
-The only supported V1 desktop shell is **Tauri + React**:
-- `engine/intent_ir/` — Rust intent crate (FFI bridge, types, validator)
-- React frontend (web layer)
+If older docs conflict with those, follow the authority set above.
 
-## Supporting Layers
+## What is canonical in this repo
 
-- `src/ui/` — JUCE/C++ audio visualization and controls (not standalone UI)
-- `plugin/` — JUCE audio/MIDI plugin implementation
-- `KmiDi_FINAL/engine/` — Engine components
-- `src_penta-core/`, `python/`, `training/` — Model and toolchain layers
-- `music_brain/` — Python intent pipeline
-- `build/`, `tools/`, `scripts/` — Build and maintenance utilities
+Primary active surfaces:
+- `src/` — React frontend
+- `music_brain/` — Python FastAPI backend and orchestration
+- `engine/intent_ir/` — Rust Intent IR contract layer embedded into KellyFFI
+- root CMake project (`engine/`, `src/`, `include/`, `src_penta-core/`) — C++ native engine, KellyFFI, plugin/runtime code
+- `shared_schemas/` — canonical schema source for engine-facing/persisted intent contracts
 
-## Legacy UI Surfaces (Deprecated)
+Important clarification:
+- `package.json` does not currently define `npm run dev:tauri`.
+- Tauri-coupled code paths still exist in places as compatibility/latent dual-mode surfaces, but they are not the current operational center described by the architecture handoff.
+- The most reliable combined development boot path today is `npm run dev:all`.
 
-Per [ADR 001](docs/adr/001-one-ui-path.md), legacy UI surfaces have been moved to `legacy/ui/`:
-- `legacy/ui/appkit_shell/` — Native macOS AppKit shell
-- `legacy/ui/qt_gui/` — Qt6 UI surface
+## Product and architecture center
 
-See `legacy/ui/README.md` for details on deprecated surfaces.
+- Product launch priority: plugin/runtime first
+- Internal architecture requirement: preserve a future standalone-native-engine path
+- Canonical intent truth: validated Intent IR
+- Live runtime truth: native engine
+- Project/session/persistence truth: plugin/runtime project layer
+- AI is additive; plugin load, playback, editing, and saved project loading must survive AI/backend failure
 
-## Canonical Rust Layer
+## Quick start
 
-The canonical Rust layer is maintained outside this repository at:
+### Setup
 
-- `~/Dev/swif:xcode/KmiDi/KmiDi_CANON/`
+```bash
+./scripts/dev-setup.sh
+```
 
-That path includes:
+This currently runs:
+- bootstrap helper
+- `npm install`
+- `python3 -m pip install -e .`
 
-- `body/` — core runtime and engine code
-- `brain/` — orchestration and model-facing logic
-- `training/` — model training and assertions
-- `ui/` — UI bindings for Rust-facing surfaces (external, not in V1 build)
+### Run the active dev stack
 
-## V1 build and dev
+```bash
+npm run dev:all
+```
 
-- **Dev setup:** `./scripts/dev-setup.sh` then `npm run dev:all` (see [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)).
+This starts:
+- React/Vite frontend on `http://localhost:1420`
+- Music Brain API on `http://localhost:8000`
 
-Two V1 build paths (use the one that matches your goal):
+Run separately if needed:
 
-- **V1 pipeline A — penta_core + PyInstaller + Tauri:** `./scripts/build_v1.sh`. Builds: sync entities → C++ penta_core / Python bindings → PyInstaller-packaged Music Brain API → Tauri app. No KellyFFI.
-- **V1 pipeline B — KellyFFI + Tauri (native desktop integration):** See [docs/FULL_STACK_BUILD.md](docs/FULL_STACK_BUILD.md) and `./scripts/build-full-stack.sh`. Builds KellyFFI shared lib (and optional KellyPlugin_VST3) for React → Tauri → KellyFFI → KellyCore. Use this path for plugin build verification and DAW/automation validation.
+```bash
+npm run dev
+npm run dev:python
+```
 
-## Operational Notes
+### Build checks
 
-- Preserve the separation between UI systems and avoid editing duplicate snapshots.
-- If you need to add or adjust a workflow, prefer updating this repo and matching canonical references in `swif:xcode/KmiDi/KmiDi_CANON/` where applicable.
-- Keep this repository as the workspace source of truth for active UI work.
+```bash
+npx tsc --noEmit
+npm run build
+python3 -m pytest tests/
+```
+
+## Native / plugin build path
+
+For C++ / KellyFFI / plugin work, use the root CMake project.
+Example:
+
+```bash
+cmake -S . -B build -G Ninja \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DBUILD_KELLY_CORE=ON \
+  -DBUILD_KELLY_FFI=ON \
+  -DKMIDI_BUILD_JUCE_UI=ON \
+  -DBUILD_PLUGINS=ON
+
+cmake --build build --target KellyFFI -j8
+```
+
+Use these docs for the detailed native story:
+- `BUILD.md`
+- `docs/FULL_STACK_BUILD.md`
+- `docs/DEVELOPMENT.md`
+- `AGENTS.md`
+
+## Repository map
+
+Top-level high-signal paths:
+- `src/` — React app
+- `music_brain/` — FastAPI app, engine API, orchestration, ML-adjacent Python modules
+- `engine/intent_ir/` — Rust validator/builder/FFI half of Intent IR
+- `shared_schemas/` — source schema for generated TS/Rust/Python contract artifacts
+- `scripts/` — setup, sync, build, env, acquisition helpers
+- `tests/` — Python tests
+- `docs/` — operational and architecture docs
+- `external/JUCE/` — JUCE dependency for native/plugin builds
+
+Supporting/legacy-adjacent surfaces still present in-tree:
+- `libs/daiw/`
+- `include/penta/`
+- `src_penta-core/`
+- `legacy/ui/`
+- older review/audit docs that may preserve historical Tauri-era assumptions
+
+## Intent contract rule
+
+When changing engine-facing or persisted intent:
+
+```bash
+python3 scripts/sync_entities.py
+python3 -m pytest tests/unit/test_api_schema.py
+cd engine/intent_ir && cargo test
+```
+
+Generated artifacts are not hand-edited.
+
+## Operational docs
+
+Use these for current runnable truth:
+- `docs/DEVELOPMENT.md`
+- `docs/ENVIRONMENT.md`
+- `docs/BOOT.md`
+- `docs/WORKSPACE_SETUP.md`
+
+Use these for architecture truth:
+- `docs/ARCHITECTURE.md`
+- `docs/REPO_MODULE_MAP.md`
+- `docs/INTENT_IR_AUTHORITY.md`
+- `docs/NATIVE_RUNTIME_OWNERSHIP.md`
+- `docs/JUCE_RT_RULES.md`
+- `docs/FFI_OWNERSHIP_AND_ABI.md`
+- `docs/PERSISTENCE_AND_MIGRATION.md`
+
+## Known drift still in-tree
+
+Historical and legacy surfaces still preserved in-tree may mention superseded Tauri-era assumptions, including:
+- `npm run dev:tauri`
+- Tauri as the canonical desktop shell
+- an external canonical Rust layer outside this repo
+
+Treat those references as archaeology, not runnable truth, unless they are explicitly revalidated against the authority set and the actual checked-in root scripts.

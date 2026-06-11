@@ -1,5 +1,9 @@
 # UI Testing Checklist
 
+Historical note
+- This checklist lives under a legacy/alternate tree and is not current repo architecture or runnable-command authority.
+- Any references below to Tauri-only startup paths should be treated as historical unless revalidated against the active repo `package.json` and `docs/DEVELOPMENT.md`.
+
 This document provides a comprehensive checklist for testing all UI buttons, functions, and interactions.
 
 ## Prerequisites
@@ -134,7 +138,7 @@ python scripts/test-ui-automated.py
 
 ### File Picker Not Working
 - Error: "File picker requires Tauri"
-- Solution: Run in Tauri mode: `npm run dev:tauri`
+- Historical workaround from the alternate tree: run in Tauri mode only if that tree still exposes a validated Tauri dev command.
 
 ### Buttons Disabled
 - Check if required data is loaded (emotions, etc.)

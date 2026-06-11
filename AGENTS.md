@@ -55,7 +55,7 @@ KmiDi/
 ├── training/scripts/       # JEPA training entrypoints (train_jepa.py)
 ├── tests/                  # Python tests (pytest)
 ├── engine/, include/, src/ # C++ (engine, bridge, plugin); engine/src/dsp, engine/intent_ir (merged)
-├── include/prrot, include/penta  # PRROT/penta headers (merged from KmiDi_FINAL)
+├── include/penta           # penta headers (merged from KmiDi_FINAL)
 ├── src_penta-core/         # Penta-core C++ (harmony, groove, diagnostics, etc.)
 ├── external/JUCE/          # JUCE 8 (required for C++/plugins/FFI)
 ├── cmake/                  # CMake helpers
@@ -346,3 +346,4 @@ Every PR or feature branch touching native code must satisfy all of the followin
 | `BUILD.md` | C++ / CMake build instructions and prerequisites |
 | `AGENTS.md` (this file): Native safety, FFI ownership, and verification map | FFI frees, duplicate JUCE, RT paths, contract drift, commands |
 | `docs/NATIVE_SAFETY_AND_FFI.md` | Human-readable mirror of the map above; keep in sync with this section |
+| `docs/SWARM_MATRIX.md` | Hermes Tmux Matrix operator guide: `init_matrix.sh` + `kmidi_swarm.py`, six-stack parallel execution, dry-run, troubleshooting |

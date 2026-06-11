@@ -5,6 +5,7 @@
 #include <cmath>
 #include <cstdint>
 #include <random>
+#include <algorithm>
 
 namespace penta::kernels {
 

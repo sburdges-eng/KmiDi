@@ -19,6 +19,12 @@ jobs:
   test:
     name: Python ${{ matrix.python-version }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+    # bash everywhere: windows-latest defaults to pwsh, which cannot parse
+    # the backslash continuations in the pytest step (same class as the
+    # ci-cpp.yml and test.yml fixes).
+    defaults:
+      run:
+        shell: bash
     strategy:
       fail-fast: false
       matrix:

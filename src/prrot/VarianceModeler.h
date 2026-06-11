@@ -12,6 +12,7 @@
 #include "prrot/VoiceProfile.h"
 #include <array>
 #include <cstdint>
+#include <cstddef>
 
 namespace prrot {
 

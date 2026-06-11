@@ -33,7 +33,19 @@ mkdir -p "${ROOT_DIR}/engine/intent_ir/binaries"
 cp "${ROOT_DIR}/dist/kmidi_brain" "${ROOT_DIR}/engine/intent_ir/binaries/kmidi_brain-${TARGET_TRIPLE}"
 chmod +x "${ROOT_DIR}/engine/intent_ir/binaries/kmidi_brain-${TARGET_TRIPLE}"
 
-echo "==> 3. Building Tauri UI shell"
+if ! ROOT_DIR_ENV="${ROOT_DIR}" python3 - <<'PY'
+import json, os, pathlib, sys
+scripts = json.loads(pathlib.Path(os.environ['ROOT_DIR_ENV'], 'package.json').read_text()).get('scripts', {})
+sys.exit(0 if 'tauri' in scripts else 1)
+PY
+then
+  echo "==> 3. Historical Tauri UI shell step unavailable in current repo state"
+  echo "    package.json does not define a tauri build script."
+  echo "    Use npm run build for the frontend and root CMake targets for native/plugin builds."
+  exit 1
+fi
+
+echo "==> 3. Building guarded historical Tauri UI shell"
 cd "${ROOT_DIR}"
 npm ci
 npm run tauri build

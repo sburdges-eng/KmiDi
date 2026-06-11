@@ -1,5 +1,11 @@
 # Whole-Repository Code Review — KmiDi / iDAW
 
+Historical note
+- This review preserves a Tauri-era repo interpretation and is not a current architecture authority document.
+- Use it as historical analysis only.
+- Treat commands and shell classifications below, including `npm run dev:tauri`, as historical/legacy unless revalidated against the current repo scripts.
+- When it conflicts with the current repo architecture, follow the 2026 authority set headed by `docs/ARCHITECTURE.md` and `docs/REPO_MODULE_MAP.md`.
+
 Evidence-bound code review. Zero tolerance for hallucinated findings. Every finding has exact file, line(s), scenario, impact, and minimal fix.
 
 **Scope:** React (Vite) frontend, Music Brain FastAPI, Tauri/Rust shell, C++ (KellyCore/KellyFFI), schemas, tests, CI, scripts, config. KmiDi-specific: local-service boundaries, DAW/plugin stability, realtime safety, FFI containment, human-approval boundaries.
@@ -37,7 +43,7 @@ Evidence-bound code review. Zero tolerance for hallucinated findings. Every find
 | Frontend (default) | `src/main.tsx` → AppConsole |
 | Frontend (legacy) | App.tsx (not mounted per main.tsx comment) |
 | Music Brain API | `python -m music_brain.api` or `uvicorn music_brain.api:app` |
-| Tauri desktop | `npm run dev:tauri` → Tauri + Vite |
+| Historical Tauri desktop shell | historical/legacy review-era shell assumption; `npm run dev:tauri` is not present in the current `package.json` |
 | C++ KellyFFI | Built by CMake; loaded by Rust via libloading/dylib |
 
 ### Important data flows

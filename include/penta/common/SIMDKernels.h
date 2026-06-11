@@ -27,6 +27,7 @@
 
 #if defined(__ARM_NEON) || defined(__ARM_NEON__)
     #include <arm_neon.h>
+#include <limits>
     #define PENTA_HAS_NEON 1
 #endif
 
@@ -685,9 +686,9 @@ inline void multiply_add_f32(float* dst, const float* a, const float* b, size_t 
 
 /// Maximum element: max(a[0..n)).  Returns -infinity for n==0.
 inline float max_element_f32(const float* a, size_t n) noexcept {
-    if (n == 0) return -__builtin_inff();
+    if (n == 0) return -std::numeric_limits<float>::infinity();
 #if defined(PENTA_HAS_AVX2)
-    __m256 vmax = _mm256_set1_ps(-__builtin_inff());
+    __m256 vmax = _mm256_set1_ps(-std::numeric_limits<float>::infinity());
     size_t i = 0;
     for (; i + 8 <= n; i += 8) {
         __m256 v = _mm256_loadu_ps(a + i);
@@ -705,7 +706,7 @@ inline float max_element_f32(const float* a, size_t n) noexcept {
     for (; i < n; ++i) result = result > a[i] ? result : a[i];
     return result;
 #elif defined(PENTA_HAS_NEON)
-    float32x4_t vmax = vdupq_n_f32(-__builtin_inff());
+    float32x4_t vmax = vdupq_n_f32(-std::numeric_limits<float>::infinity());
     size_t i = 0;
     for (; i + 4 <= n; i += 4) {
         float32x4_t v = vld1q_f32(a + i);

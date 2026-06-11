@@ -2,7 +2,11 @@
 
 ## Status
 
-Accepted
+Superseded on 2026-06-08 by `docs/ARCHITECTURE.md`, `docs/REPO_MODULE_MAP.md`, and the 2026 architecture authority set.
+
+Historical note
+- This ADR records an earlier Tauri-first UI decision.
+- It is kept for repository history only and is no longer the governing architecture document.
 
 ## Context
 
