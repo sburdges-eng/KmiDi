@@ -13,9 +13,12 @@ from music_brain.generation.latency_budget import BudgetExceeded, LatencyBudget
 
 
 def test_budget_remaining_decreases_as_time_passes():
-    budget = LatencyBudget(total_ms=50.0)
+    # Budget far larger than any plausible CI scheduling stall: a loaded
+    # runner can stretch a 5 ms sleep past 50 ms and zero out a tight
+    # budget, turning this into a flake.
+    budget = LatencyBudget(total_ms=10_000.0)
     initial = budget.remaining_ms
-    time.sleep(0.005)
+    time.sleep(0.03)
     later = budget.remaining_ms
     assert later < initial
     assert later > 0

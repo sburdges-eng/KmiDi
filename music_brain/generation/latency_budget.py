@@ -42,7 +42,10 @@ class LatencyBudget:
         if total_ms <= 0:
             raise ValueError("total_ms must be > 0")
         self._total_ms = float(total_ms)
-        self._start = time.monotonic()
+        # perf_counter, not monotonic: on Windows (CPython <= 3.12)
+        # monotonic() is GetTickCount64() with ~15.6 ms granularity —
+        # useless for millisecond budgets.
+        self._start = time.perf_counter()
         self._consumed_ms = 0.0
 
     @property
@@ -51,7 +54,7 @@ class LatencyBudget:
 
     @property
     def elapsed_ms(self) -> float:
-        return (time.monotonic() - self._start) * 1000.0
+        return (time.perf_counter() - self._start) * 1000.0
 
     @property
     def consumed_ms(self) -> float:
