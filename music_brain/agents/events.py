@@ -168,13 +168,22 @@ class EventBus:
         self._pending_requests: Dict[str, asyncio.Future] = {}
         self._history: List[Event] = []
         self._history_size = history_size
-        self._lock = asyncio.Lock()
+        # Created lazily by _ensure_lock(): on Python 3.9 asyncio.Lock()
+        # binds (and requires) the current event loop at construction, so a
+        # sync-context EventBus() would raise RuntimeError.
+        self._lock: Optional[asyncio.Lock] = None
         self._running = True
         self._stats = {
             "events_emitted": 0,
             "events_handled": 0,
             "errors": 0,
         }
+
+    def _ensure_lock(self) -> asyncio.Lock:
+        """Create the history lock on first use, inside the running loop."""
+        if self._lock is None:
+            self._lock = asyncio.Lock()
+        return self._lock
 
     # =========================================================================
     # Subscription
@@ -314,7 +323,7 @@ class EventBus:
         self._stats["events_emitted"] += 1
 
         # Add to history
-        async with self._lock:
+        async with self._ensure_lock():
             self._history.append(event)
             if len(self._history) > self._history_size:
                 self._history = self._history[-self._history_size :]
