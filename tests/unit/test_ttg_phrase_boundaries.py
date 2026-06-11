@@ -1,4 +1,7 @@
-"""TTG phrase-boundary extraction (Goal: Phrase-boundary prediction, Bar/beat structural awareness)."""
+"""TTG phrase-boundary extraction.
+
+Goal: phrase-boundary prediction and bar/beat structural awareness.
+"""
 
 import pytest
 
