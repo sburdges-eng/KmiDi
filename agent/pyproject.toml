@@ -1,0 +1,14 @@
+[build-system]
+requires = ["hatchling>=1.25.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "kmidi"
+version = "0.1.0"
+description = "Audio and DAW tooling (KmiDi + iDAW)"
+requires-python = ">=3.11"
+dependencies = [
+    "langgraph",   # required by vendored ai_core
+]
+
+# ai_core is vendored in-tree (./ai_core) — self-contained, no workspace dependency.

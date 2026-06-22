@@ -1,0 +1,20 @@
+# KmiDi dataset config (audio / MIDI / JEPA)
+# Paths relative to app or workspace root
+
+[audio]
+# Root directory for audio files (e.g. WAV, FLAC)
+root = "data/audio"
+train_split = "data/audio/train"
+val_split = "data/audio/val"
+# Optional
+# test_split = "data/audio/test"
+
+[midi]
+# MIDI file root (optional)
+root = "data/midi"
+
+[jepa]
+# JEPA training: context/target views or precomputed embeddings
+# Stub; align with libs/jepa once implemented
+# features_dir = "data/jepa_features"
+# manifest_path = "data/splits/train.csv"
