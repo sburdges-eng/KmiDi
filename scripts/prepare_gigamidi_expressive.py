@@ -76,7 +76,10 @@ def check_auth() -> tuple[bool, str]:
         info = whoami(token=token) if token else whoami()
         return True, f"logged in as {info.get('name', '?')}"
     except Exception as e:
-        return False, f"not logged in ({e.__class__.__name__}). Run `hf auth login` or export HUGGINGFACE_HUB_TOKEN."
+        return False, (
+            f"not logged in ({e.__class__.__name__}). "
+            "Run `hf auth login` or export HUGGINGFACE_HUB_TOKEN."
+        )
 
 
 def check_deps() -> list[str]:
@@ -91,6 +94,7 @@ def check_deps() -> list[str]:
 
 def probe_repo() -> dict:
     from huggingface_hub import HfApi
+
     api = HfApi()
     tree = api.list_repo_tree(REPO_ID, repo_type="dataset", recursive=True, path_in_repo=CONFIG)
     per_split: dict[str, dict] = {}
@@ -146,12 +150,15 @@ def cmd_dry_run(args: argparse.Namespace) -> int:
 
     target_bytes = splits.get(args.split, {}).get("bytes", 0)
     print()
-    print(f"On --download, {args.split} will cache ~{bytes_human(target_bytes)} of parquet to {HF_CACHE}.")
+    print(
+        f"On --download, {args.split} will cache "
+        f"~{bytes_human(target_bytes)} of parquet to {HF_CACHE}."
+    )
     print("Filter is applied in-memory after the parquet shards are in cache;")
     print("it does NOT reduce network transfer (all rows must be read to evaluate).")
     print()
     print("Next steps:")
-    print(f"  1. Ensure auth: `hf auth login` (token from https://hf.co/settings/tokens).")
+    print("  1. Ensure auth: `hf auth login` (token from https://hf.co/settings/tokens).")
     print(f"  2. Accept the dataset terms at https://hf.co/datasets/{REPO_ID} if not done.")
     print(f"  3. Run: python3 {Path(__file__).resolve()} --download")
     print(f"  4. Optional: add --extract to dump filtered MIDI bytes to {OUT_DIR}.")
@@ -177,14 +184,16 @@ def cmd_download(args: argparse.Namespace) -> int:
 
     thr = args.threshold
     expressive = ds.filter(lambda x: (x.get("nomml_score") or 0) > thr)
-    print(f"  expressive (nomml_score > {thr}):  {len(expressive):,} rows "
-          f"({100 * len(expressive) / max(len(ds), 1):.1f}% of split)")
+    print(
+        f"  expressive (nomml_score > {thr}):  {len(expressive):,} rows "
+        f"({100 * len(expressive) / max(len(ds), 1):.1f}% of split)"
+    )
 
     if args.extract:
         return _extract(expressive, args)
 
     print()
-    print(f"Done (parquet cached, subset materialised).")
+    print("Done (parquet cached, subset materialised).")
     print(f"Pass --extract to write per-row MIDI bytes to {OUT_DIR}.")
     return 0
 
@@ -197,7 +206,11 @@ def _extract(expressive, args: argparse.Namespace) -> int:
     candidates = [c for c in expressive.column_names if c in ("bytes", "midi", "audio", "data")]
     midi_col = candidates[0] if candidates else None
     if midi_col is None:
-        print("ERROR: could not locate a MIDI bytes column. Columns were:", expressive.column_names, file=sys.stderr)
+        print(
+            "ERROR: could not locate a MIDI bytes column. Columns were:",
+            expressive.column_names,
+            file=sys.stderr,
+        )
         return 2
     print(f"Extracting column `{midi_col}` to {OUT_DIR} ...")
 
@@ -220,16 +233,27 @@ def _extract(expressive, args: argparse.Namespace) -> int:
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
-    p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("--download", action="store_true",
-                   help="Actually download parquet shards and materialise the filter "
-                        "(NOT run by default).")
-    p.add_argument("--extract", action="store_true",
-                   help="After downloading, extract per-row MIDI bytes to OUT_DIR. "
-                        "Ignored without --download.")
+    p = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    p.add_argument(
+        "--download",
+        action="store_true",
+        help="Actually download parquet shards and materialise the filter " "(NOT run by default).",
+    )
+    p.add_argument(
+        "--extract",
+        action="store_true",
+        help="After downloading, extract per-row MIDI bytes to OUT_DIR. "
+        "Ignored without --download.",
+    )
     p.add_argument("--split", default=DEFAULT_SPLIT, choices=["train", "validation", "test"])
-    p.add_argument("--threshold", type=float, default=DEFAULT_THRESHOLD,
-                   help="nomml_score > THRESHOLD (default 0.5).")
+    p.add_argument(
+        "--threshold",
+        type=float,
+        default=DEFAULT_THRESHOLD,
+        help="nomml_score > THRESHOLD (default 0.5).",
+    )
     return p.parse_args(argv)
 
 
