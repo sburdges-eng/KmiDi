@@ -624,3 +624,17 @@
     transition: none;
   }
 }
+
+/* ─── Universal Input mode ─── */
+
+.mode-universal {
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr;
+  height: 100%;
+  min-height: 0;
+}
+
+.mode-universal .umi-container {
+  min-height: 0;
+}

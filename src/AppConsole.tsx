@@ -12,10 +12,11 @@ import LyricPanel from './components/LyricPanel';
 import { SpectoCloudPanel } from './components/SpectoCloudPanel';
 import { MusicCustomizer } from './components/MusicCustomizer';
 import { RotaryModeSelector } from './components/RotaryModeSelector';
+import UniversalMusicInput from './components/UniversalMusicInput/UniversalMusicInput';
 import { useMusicBrain } from './hooks/useMusicBrain';
 import './console-shell.css';
 
-type Mode = 'mix-detail' | 'inspire' | 'create' | 'compose';
+type Mode = 'mix-detail' | 'inspire' | 'create' | 'compose' | 'universal';
 
 /**
  * Feature flag: swap the vertical NavRail for the tactile rotary mode
@@ -93,6 +94,17 @@ const NAV_ITEMS: { id: Mode; label: string; icon: ReactNode }[] = [
         <rect x="11" y="3" width="6" height="6" rx="1" />
         <rect x="3" y="11" width="6" height="6" rx="1" />
         <rect x="11" y="11" width="6" height="6" rx="1" />
+      </svg>
+    ),
+  },
+  {
+    id: 'universal',
+    label: 'Universal Input',
+    icon: (
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5">
+        <rect x="3" y="3" width="6.5" height="14" rx="1" />
+        <rect x="10.5" y="3" width="6.5" height="14" rx="1" />
+        <path d="M12.5 7h2.5M12.5 10h2.5M12.5 13h1.5" />
       </svg>
     ),
   },
@@ -436,6 +448,12 @@ export default function AppConsole() {
           {displayMode === 'compose' && (
             <section className="mode-compose mode-enter" aria-label="Intent Builder">
               <IntentBuilder />
+            </section>
+          )}
+
+          {displayMode === 'universal' && (
+            <section className="mode-universal mode-enter" aria-label="Universal music input">
+              <UniversalMusicInput apiStatus={apiStatus} />
             </section>
           )}
         </div>
