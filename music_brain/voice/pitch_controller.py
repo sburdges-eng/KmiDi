@@ -206,9 +206,14 @@ class PitchController:
         try:
             import librosa
 
-            # Use librosa's pitch detection
+            # Use librosa's pitch detection. Pass sr explicitly: pyin defaults
+            # to sr=22050, which rescales detected pitch by 22050/sample_rate
+            # (e.g. a 440 Hz tone at 8 kHz reads as ~1216 Hz / MIDI 87).
             f0, voiced_flag, voiced_probs = librosa.pyin(
-                audio, fmin=librosa.note_to_hz("C2"), fmax=librosa.note_to_hz("C7")
+                audio,
+                fmin=librosa.note_to_hz("C2"),
+                fmax=librosa.note_to_hz("C7"),
+                sr=sample_rate,
             )
             times = librosa.frames_to_time(np.arange(len(f0)), sr=sample_rate)
             return f0, times
