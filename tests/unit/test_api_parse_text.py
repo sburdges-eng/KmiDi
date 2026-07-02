@@ -25,9 +25,7 @@ RESPONSE_KEYS = {
 
 def test_parse_text_returns_interpretation(client):
     """A musical description yields distributions, clusters, and taxonomy ids."""
-    r = client.post(
-        "/parse-text", json={"text": "slow bluesy dorian, clean tone, laid back"}
-    )
+    r = client.post("/parse-text", json={"text": "slow bluesy dorian, clean tone, laid back"})
     assert r.status_code == 200
     body = r.json()
     assert RESPONSE_KEYS <= set(body.keys())
@@ -59,9 +57,7 @@ def test_parse_text_empty_text_returns_defaults(client):
 
 def test_parse_text_non_musical_text_low_confidence(client):
     """Prose without musical terms yields low confidence but a usable payload."""
-    r = client.post(
-        "/parse-text", json={"text": "please file the expense report by friday"}
-    )
+    r = client.post("/parse-text", json={"text": "please file the expense report by friday"})
     assert r.status_code == 200
     body = r.json()
     assert body["confidence"] < 0.5
