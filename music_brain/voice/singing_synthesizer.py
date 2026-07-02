@@ -287,13 +287,9 @@ class SingingSynthesizer:
 
             # Bandpass filter at characteristic frequency
             if params["freq"] > 0:
-                b, a = signal.butter(
-                    4,
-                    [params["freq"] * 0.7, params["freq"] * 1.3],
-                    btype="band",
-                    fs=self.config.sample_rate,
+                noise = self._safe_bandpass(
+                    noise, params["freq"] * 0.7, params["freq"] * 1.3, order=4
                 )
-                noise = signal.filtfilt(b, a, noise)
 
             # Add voicing if not noise-only
             if not params["noise"] and base_frequency > 0:
@@ -323,6 +319,25 @@ class SingingSynthesizer:
 
         return np.zeros(num_samples)
 
+    def _safe_bandpass(
+        self, waveform: np.ndarray, low: float, high: float, order: int = 2
+    ) -> np.ndarray:
+        """Bandpass-filter, degrading to a passthrough when the band exceeds
+        Nyquist or the buffer is too short for zero-phase filtering."""
+        if signal is None:
+            return waveform
+
+        nyquist = self.config.sample_rate / 2.0
+        high = min(high, nyquist * 0.99)
+        if not 0 < low < high:
+            return waveform
+
+        b, a = signal.butter(order, [low, high], btype="band", fs=self.config.sample_rate)
+        padlen = 3 * max(len(a), len(b))
+        if len(waveform) <= padlen:
+            return waveform
+        return signal.filtfilt(b, a, waveform)
+
     def _apply_formant_filters(
         self, waveform: np.ndarray, f1: float, f2: float, f3: float
     ) -> np.ndarray:
@@ -332,18 +347,8 @@ class SingingSynthesizer:
 
         # Create parallel formant filters
         filtered = np.zeros_like(waveform)
-
-        # Formant 1
-        b1, a1 = signal.butter(2, [f1 * 0.8, f1 * 1.2], btype="band", fs=self.config.sample_rate)
-        filtered += signal.filtfilt(b1, a1, waveform) * 1.0
-
-        # Formant 2
-        b2, a2 = signal.butter(2, [f2 * 0.8, f2 * 1.2], btype="band", fs=self.config.sample_rate)
-        filtered += signal.filtfilt(b2, a2, waveform) * 0.6
-
-        # Formant 3
-        b3, a3 = signal.butter(2, [f3 * 0.8, f3 * 1.2], btype="band", fs=self.config.sample_rate)
-        filtered += signal.filtfilt(b3, a3, waveform) * 0.3
+        for center, gain in ((f1, 1.0), (f2, 0.6), (f3, 0.3)):
+            filtered += self._safe_bandpass(waveform, center * 0.8, center * 1.2) * gain
 
         # Mix with original
         return (

@@ -254,6 +254,53 @@ def test_instrument_adsr_survives_notes_shorter_than_release():
         assert np.all(np.isfinite(audio))
 
 
+def test_formant_synthesis_high_fricatives_and_glides_at_low_sample_rate():
+    """Regression: S/Z (6 kHz band) and glide formants exceed Nyquist at low
+    sample rates; with scipy present the filters must degrade to passthrough,
+    not raise ValueError."""
+    from music_brain.voice.phoneme_processor import Phoneme, PhonemeSequence
+
+    synth = SingingSynthesizer(FormantConfig(sample_rate=SR))
+    pc = PitchController(sample_rate=SR)
+    phonemes = [
+        Phoneme(symbol="S", duration_ms=100.0, start_time_ms=0.0),
+        Phoneme(symbol="Y", duration_ms=100.0, start_time_ms=100.0),
+        Phoneme(symbol="IY", duration_ms=100.0, start_time_ms=200.0),
+    ]
+    seq = PhonemeSequence(phonemes=phonemes, total_duration_ms=300.0)
+    curve = pc.create_pitch_curve([69], [0.3])
+    audio = synth.synthesize(seq, curve)
+    assert np.all(np.isfinite(audio))
+
+
+def test_formant_synthesis_survives_ultra_short_phonemes():
+    """Regression: buffers shorter than filtfilt's padlen must not raise when
+    scipy is installed (CI has scipy; local dev may not)."""
+    from music_brain.voice.phoneme_processor import Phoneme, PhonemeSequence
+
+    synth = SingingSynthesizer(FormantConfig(sample_rate=SR))
+    pc = PitchController(sample_rate=SR)
+    symbols = ["AE", "S", "M", "L"]
+    phonemes = [
+        Phoneme(symbol=s, duration_ms=1.0, start_time_ms=i * 1.0) for i, s in enumerate(symbols)
+    ]
+    seq = PhonemeSequence(phonemes=phonemes, total_duration_ms=4.0)
+    curve = pc.create_pitch_curve([60], [0.004])
+    audio = synth.synthesize(seq, curve)
+    assert np.all(np.isfinite(audio))
+
+
+def test_instrument_brightness_filter_clamped_at_low_sample_rate():
+    """Regression: brightness=1.0 puts the high-pass cutoff at Nyquist for
+    SR=8000; the filter must be skipped, not raise."""
+    from music_brain.voice import InstrumentConfig
+
+    synth = InstrumentSynthesizer("piano", sample_rate=SR)
+    synth.config = InstrumentConfig(sample_rate=SR, brightness=1.0)
+    audio = synth.synthesize_notes([72], [0.2])
+    assert np.all(np.isfinite(audio))
+
+
 def test_get_instrument_preset_fallback():
     from music_brain.voice import get_instrument_preset
 

@@ -205,16 +205,18 @@ class InstrumentSynthesizer:
         envelope = self._generate_adsr(num_samples)
         waveform = waveform * envelope * velocity
 
-        # Apply brightness filter (high-frequency emphasis)
+        # Apply brightness filter (high-frequency emphasis); skip when the
+        # cutoff would reach Nyquist or the note is too short to zero-phase
+        # filter.
         if signal is not None and self.config.brightness > 0.5:
-            # High-pass filter for brightness
             cutoff = 2000 + (self.config.brightness - 0.5) * 4000
-            b, a = signal.butter(2, cutoff, btype="high", fs=self.sample_rate)
-            # filtfilt requires len(x) > padlen (default 3 * max(len(a), len(b)));
-            # skip the brightness filter for buffers too short to pad.
-            padlen = 3 * max(len(a), len(b))
-            if num_samples > padlen:
-                waveform = signal.filtfilt(b, a, waveform)
+            if cutoff < self.sample_rate / 2.0 * 0.99:
+                b, a = signal.butter(2, cutoff, btype="high", fs=self.sample_rate)
+                # filtfilt requires len(x) > padlen (3 * max(len(a), len(b)));
+                # skip the brightness filter for buffers too short to pad.
+                padlen = 3 * max(len(a), len(b))
+                if num_samples > padlen:
+                    waveform = signal.filtfilt(b, a, waveform)
 
         return waveform
 
