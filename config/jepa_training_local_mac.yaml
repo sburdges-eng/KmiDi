@@ -1,0 +1,46 @@
+# JEPA training – local 16 GB macOS (or free-tier Colab/Kaggle)
+# =============================================================================
+# Use with: python scripts/train_jepa_local.py --config config/jepa_training_local_mac.yaml
+# Data: data/audio and data/midi (or set JEPA_AUDIO_DIR, JEPA_MIDI_DIR).
+# Checkpoints: checkpoints/ (or JEPA_CHECKPOINT_DIR). Prefer ~/Models/checkpoints for governance.
+# =============================================================================
+
+audio_jepa:
+  tier: small
+  latent_dim: 128
+  n_mels: 80
+  max_frames: 256
+  sample_rate: 22050
+  hop_length: 512
+  mask_ratio: 0.5
+  mask_block_size: 4
+
+chord_jepa:
+  d_model: 128
+  num_heads: 4
+  num_layers: 2
+  seq_len: 64
+  num_chords: 170
+  dropout: 0.1
+  mask_ratio: 0.5
+
+training:
+  epochs: 30
+  batch_size: 4
+  learning_rate: 3.0e-4
+  weight_decay: 0.01
+  warmup_epochs: 3
+  save_every: 5
+  early_stop_patience: 10
+  mixed_precision: false
+  gradient_clip: 1.0
+
+datasets:
+  audio:
+    local_cache: data/audio
+  midi:
+    local_cache: data/midi
+
+checkpoints:
+  local_dir: checkpoints
+  export_onnx: true

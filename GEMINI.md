@@ -8,7 +8,7 @@ KmiDi / iDAW is an AI-powered music creation platform (monorepo).
 Current operational/authority framing:
 
 | Layer | Tech | Location |
-|-------|------|----------|
+| ------- | ------ | ---------- |
 | Frontend | React 19 + Vite + TypeScript + Tailwind | `src/` |
 | Intent IR contract layer | Rust staticlib + C ABI | `engine/intent_ir/` |
 | Native engine | C++20 (KellyCore, KellyFFI, JUCE 8) | `engine/`, `src/`, `include/`, `src_penta-core/` |
@@ -114,7 +114,7 @@ python3 scripts/sync_entities.py    # Sync shared_schemas/ → TS types + Rust t
 ## Key build options (CMake)
 
 | Option | Default | Notes |
-|--------|---------|-------|
+| -------- | --------- | ------- |
 | `BUILD_KELLY_CORE` | ON | Core C++ library |
 | `BUILD_KELLY_FFI` | ON | Shared lib exposing the combined KellyFFI + embedded Intent IR C ABI |
 | `BUILD_PLUGINS` | ON | VST3/CLAP (requires `KMIDI_BUILD_JUCE_UI=ON`) |
@@ -154,7 +154,7 @@ python3 scripts/sync_entities.py    # Sync shared_schemas/ → TS types + Rust t
 ## Reference docs
 
 | Doc | Content |
-|-----|---------|
+| ----- | --------- |
 | `AGENTS.md` | Full agent context; **§ Native safety, FFI ownership, and verification map** for FFI/JUCE/RT before native edits |
 | `BUILD.md` | C++ / CMake / Tauri build reference |
 | `docs/DEVELOPMENT.md` | Dev guide, workflows, debugging |

@@ -433,8 +433,13 @@ class AudioDatasetTorch:
         else:
             features, label = self.dataset[idx]
 
-        # Convert to tensor
-        features_tensor = torch.from_numpy(features).float()
+        # Convert to tensor (handle both numpy arrays and existing tensors).
+        # AudioDataset.__getitem__ returns torch tensors directly on newer
+        # code paths, but the waveform/numpy path still emits ndarrays.
+        if isinstance(features, torch.Tensor):
+            features_tensor = features.float()
+        else:
+            features_tensor = torch.from_numpy(features).float()
 
         # Add channel dimension if needed (for CNN input)
         if features_tensor.dim() == 2:

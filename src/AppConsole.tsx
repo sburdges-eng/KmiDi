@@ -11,10 +11,33 @@ import { QuickStartPanel } from './components/QuickStartPanel';
 import LyricPanel from './components/LyricPanel';
 import { SpectoCloudPanel } from './components/SpectoCloudPanel';
 import { MusicCustomizer } from './components/MusicCustomizer';
+import { RotaryModeSelector } from './components/RotaryModeSelector';
 import { useMusicBrain } from './hooks/useMusicBrain';
 import './console-shell.css';
 
 type Mode = 'mix-detail' | 'inspire' | 'create' | 'compose';
+
+/**
+ * Feature flag: swap the vertical NavRail for the tactile rotary mode
+ * selector (see design/prototype-tactile.html). Default OFF so this
+ * ship is a no-op for existing users. Enable at build time with
+ *   VITE_ROTARY_NAV=true npm run dev
+ * or at runtime with
+ *   localStorage.setItem('kmidi.rotaryNav', 'true'); location.reload();
+ */
+const USE_ROTARY_NAV: boolean = (() => {
+  if (typeof window === 'undefined') return false;
+  // Vite exposes env at import.meta.env; guard for environments without it.
+  try {
+    const viteEnv = (import.meta as unknown as { env?: Record<string, string | undefined> }).env;
+    if (viteEnv?.VITE_ROTARY_NAV === 'true') return true;
+  } catch { /* noop */ }
+  try {
+    return window.localStorage.getItem('kmidi.rotaryNav') === 'true';
+  } catch {
+    return false;
+  }
+})();
 
 type Channel = {
   id: string;
@@ -321,8 +344,17 @@ export default function AppConsole() {
         </div>
       </header>
 
-      <div className="lower-deck">
-        <NavRail activeMode={mode} onModeChange={setMode} />
+      <div className={`lower-deck${USE_ROTARY_NAV ? ' lower-deck--rotary' : ''}`}>
+        {USE_ROTARY_NAV ? (
+          <RotaryModeSelector<Mode>
+            items={NAV_ITEMS}
+            activeMode={mode}
+            onModeChange={setMode}
+            panelId="workspace-panel"
+          />
+        ) : (
+          <NavRail activeMode={mode} onModeChange={setMode} />
+        )}
 
         <div
           id="workspace-panel"
