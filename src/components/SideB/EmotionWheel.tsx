@@ -1,4 +1,5 @@
 import { ChangeEvent } from 'react';
+import { EmotionDisc } from './EmotionDisc';
 
 type EmotionNode = {
   base: string;
@@ -23,7 +24,33 @@ const EMOTIONS = {
 
 const INTENSITIES = ['low', 'medium', 'high'];
 
+/**
+ * Feature flag: swap the 3-dropdown form for the tactile polar EmotionDisc.
+ * Enable with either a Vite env var (`VITE_POLAR_EMOTION=true`) at build time,
+ * or at runtime in the browser console:
+ *   localStorage.setItem('kmidi.polarEmotion', 'true'); location.reload();
+ * Default is OFF so existing behavior is preserved.
+ */
+const USE_POLAR_EMOTION: boolean = (() => {
+  if (typeof window === 'undefined') return false;
+  try {
+    const viteEnv = (import.meta as unknown as { env?: Record<string, string | undefined> }).env;
+    if (viteEnv?.VITE_POLAR_EMOTION === 'true') return true;
+  } catch {
+    /* noop */
+  }
+  try {
+    return window.localStorage.getItem('kmidi.polarEmotion') === 'true';
+  } catch {
+    return false;
+  }
+})();
+
 export function EmotionWheel({ selected, onSelect }: Props) {
+  if (USE_POLAR_EMOTION) {
+    return <EmotionDisc selected={selected} onSelect={onSelect} />;
+  }
+
   const baseKeys = Object.keys(EMOTIONS) as Array<keyof typeof EMOTIONS>;
 
   const handleBase = (event: ChangeEvent<HTMLSelectElement>) => {
