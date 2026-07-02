@@ -50,11 +50,10 @@ namespace penta::harmony
         const Chord &getCurrentChord() const noexcept { return currentChord_; }
         const Scale &getCurrentScale() const noexcept { return currentScale_; }
 
-        // Not noexcept: allocates std::vector on the heap. Add an alloc-free
-        // `*RT()` variant if an RT caller ever needs voice leading on-thread.
+        // RT-safe: Get voice leading suggestions
         std::vector<Note> suggestVoiceLeading(
             const Chord &targetChord,
-            const std::vector<Note> &currentVoices) const;
+            const std::vector<Note> &currentVoices) const noexcept;
 
         // Non-RT: Update configuration
         void updateConfig(const Config &config);

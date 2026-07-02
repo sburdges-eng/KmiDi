@@ -63,13 +63,11 @@ public:
         bool hasParallelOctaves;
     };
 
-    // Analyze movement between two voicings.
-    // Not noexcept: VoiceLeadingResult contains three std::vector members
-    // that may allocate. Add an alloc-free *RT() variant if needed.
+    // Analyze movement between two voicings
     VoiceLeadingResult analyze(
         const std::vector<Note>& fromVoicing,
         const std::vector<Note>& toVoicing
-    ) const;
+    ) const noexcept;
 
     // Voice an entire chord progression
     std::vector<std::vector<Note>> voiceProgression(
@@ -83,13 +81,11 @@ public:
         const std::vector<VoiceMovement>& movements
     ) const noexcept;
 
-    // Chord inversion (rotate voices by N positions, octave-shift the rotated note).
-    // Not noexcept: returns std::vector<Note>. Add an alloc-free *RT()
-    // variant if needed on the audio thread.
+    // Chord inversion (rotate voices by N positions, octave-shift the rotated note)
     static std::vector<Note> invertVoicing(
         const std::vector<Note>& voicing,
         int inversion
-    );
+    ) noexcept;
 
 private:
     struct VoicingCandidate {
