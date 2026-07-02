@@ -23,15 +23,36 @@ jobs:
     name: "Sprint 2 – Core Integration"
     runs-on: ubuntu-latest
     steps:
+      # external/JUCE is a submodule; configure dies at the JUCE-not-found
+      # guard (CMakeLists.txt:146) without it — same fix as test.yml cpp-tests.
       - uses: actions/checkout@v4
-      - name: C++ Build & Test
+        with:
+          submodules: recursive
+      - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y cmake g++
-          mkdir build && cd build
-          cmake .. -DCMAKE_BUILD_TYPE=Release
-          cmake --build . -j
-          ctest --output-on-failure
+          sudo apt-get install -y \
+            cmake \
+            ninja-build \
+            build-essential \
+            libasound2-dev \
+            libfreetype6-dev \
+            libx11-dev \
+            libxrandr-dev \
+            libxinerama-dev \
+            libxcursor-dev \
+            libgl1-mesa-dev \
+            libglu1-mesa-dev
+          scripts/ci/install_juce_linux_deps.sh
+      - name: C++ Build (KellyCore, headless)
+        run: |
+          cmake -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_KELLY_CORE=ON \
+            -DBUILD_KELLY_FFI=OFF \
+            -DBUILD_PLUGINS=OFF \
+            -DBUILD_RT_HARNESS=OFF
+          cmake --build build --target KellyCore -j
 
   sprint3_documentation:
     name: "Sprint 3 – Documentation"

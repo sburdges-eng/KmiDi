@@ -1,0 +1,30 @@
+# Vendored, archived, legacy, and generated trees — not held to doc style.
+_archive/
+external/
+node_modules/
+third_party/
+legacy/
+KmiDi_PROJECT/
+KmiDi_TRAINING/
+KmiDi-puzzles/
+iDAW-Android/
+.worktrees/
+.claude/
+.superpowers/
+.hermes/
+.kelly/
+.parrot/
+.agents/
+.agent-sessions/
+projects/
+experiments/
+analysis/
+artifacts/
+quarantine/
+dist/
+build*/
+graphify-out*/
+Obsidian_Vault/
+ML Kelly Training/
+final_kel/
+Testing/
