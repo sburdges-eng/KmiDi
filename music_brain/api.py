@@ -17,7 +17,7 @@ try:
     from fastapi import APIRouter, Body, FastAPI, HTTPException
     from fastapi.middleware.cors import CORSMiddleware
     from fastapi.responses import FileResponse
-    from pydantic import BaseModel
+    from pydantic import BaseModel, Field
 
     FASTAPI_AVAILABLE = True
 except ImportError:  # pragma: no cover - optional dependency
@@ -1703,6 +1703,30 @@ if FASTAPI_AVAILABLE:
             ),
             "session_id": request.session_id,
         }
+
+    class ParseTextRequest(BaseModel):
+        text: str = Field(..., max_length=4096)
+        locale: Optional[str] = "en"
+        user_id: Optional[str] = None
+
+    @app.post(
+        "/parse-text",
+        summary="Interpret Text",
+        description="Convert natural language into probabilistic musical parameter "
+        "distributions — context clusters, activated taxonomy nodes, and "
+        "confidence levels, not fixed values.",
+    )
+    @api_error_handler(log_message="parse-text failed", detail=_HTTP_500_DETAIL)
+    async def parse_text(request: ParseTextRequest):
+        """Interpret free text into probabilistic musical parameter distributions."""
+        from music_brain.nlp.text_to_intent_service import TextToIntentService
+
+        service = TextToIntentService()
+        return service.parse(
+            text=request.text,
+            locale=request.locale or "en",
+            user_id=request.user_id,
+        )
 
     @app.post(
         "/lyrics",
