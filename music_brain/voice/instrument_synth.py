@@ -210,7 +210,11 @@ class InstrumentSynthesizer:
             # High-pass filter for brightness
             cutoff = 2000 + (self.config.brightness - 0.5) * 4000
             b, a = signal.butter(2, cutoff, btype="high", fs=self.sample_rate)
-            waveform = signal.filtfilt(b, a, waveform)
+            # filtfilt requires len(x) > padlen (default 3 * max(len(a), len(b)));
+            # skip the brightness filter for buffers too short to pad.
+            padlen = 3 * max(len(a), len(b))
+            if num_samples > padlen:
+                waveform = signal.filtfilt(b, a, waveform)
 
         return waveform
 
