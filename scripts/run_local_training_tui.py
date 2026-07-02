@@ -5,7 +5,8 @@ Runs in iTerm2, WezTerm, or any terminal with color support.
 
 Usage:
   python scripts/run_local_training_tui.py --config config/jepa_training_local_mac.yaml
-  python scripts/run_local_training_tui.py --config config/jepa_training_local_mac.yaml --model chord_jepa
+  python scripts/run_local_training_tui.py --config config/jepa_training_local_mac.yaml \\
+      --model chord_jepa
 
 Requires: pip install rich
 """
@@ -35,6 +36,7 @@ except ImportError:
 
 def _load_config(path: str):
     import yaml
+
     with open(path) as f:
         return yaml.safe_load(f)
 
@@ -45,6 +47,7 @@ def _build_training_config(raw: dict):
         ChordJEPAConfig,
         TrainingConfig,
     )
+
     t = raw.get("training", {})
     training = TrainingConfig(
         epochs=int(t.get("epochs", 120)),
@@ -83,7 +86,6 @@ def _build_training_config(raw: dict):
 
 def make_render(state: dict, theme: Theme):
     """Build the Rich layout: header, progress, speed, model uniqueness, loss table."""
-    console = Console(theme=theme)
     model_name = state.get("model_name", "—")
     epoch = state.get("epoch", 0)
     total_epochs = state.get("total_epochs", 1)
@@ -136,6 +138,7 @@ def make_render(state: dict, theme: Theme):
     )
     metrics_panel = Panel(metrics, title="[bold]Metrics[/]", border_style="green")
     from rich.columns import Columns
+
     grid = Columns([progress_panel, metrics_panel], equal=False, expand=True)
     return Panel(
         header,
@@ -147,8 +150,13 @@ def make_render(state: dict, theme: Theme):
 
 def main():
     import argparse
+
     parser = argparse.ArgumentParser(description="Local JEPA training with Rich TUI")
-    parser.add_argument("--config", default=str(_REPO_ROOT / "config" / "jepa_training_local_mac.yaml"), help="Config YAML")
+    parser.add_argument(
+        "--config",
+        default=str(_REPO_ROOT / "config" / "jepa_training_local_mac.yaml"),
+        help="Config YAML",
+    )
     parser.add_argument("--model", choices=["audio_jepa", "chord_jepa", "both"], default="both")
     parser.add_argument("--epochs", type=int, default=None)
     args = parser.parse_args()
@@ -217,10 +225,23 @@ def main():
                     if len(dataset) == 0:
                         console.print(f"[red]ERROR:[/] No audio files in {audio_dir}")
                         continue
-                    loader = DataLoader(dataset, batch_size=training.batch_size, shuffle=True, num_workers=0)
+                    loader = DataLoader(
+                        dataset, batch_size=training.batch_size, shuffle=True, num_workers=0
+                    )
                     ckpt_dir = os.path.join(checkpoint_root, "audio_jepa")
-                    export_path = os.path.join(checkpoint_root, "audio_jepa.onnx") if raw.get("checkpoints", {}).get("export_onnx", True) else None
-                    train_audio_jepa(loader, audio_config, training, checkpoint_dir=ckpt_dir, export_path=export_path, progress_callback=progress_callback)
+                    export_path = (
+                        os.path.join(checkpoint_root, "audio_jepa.onnx")
+                        if raw.get("checkpoints", {}).get("export_onnx", True)
+                        else None
+                    )
+                    train_audio_jepa(
+                        loader,
+                        audio_config,
+                        training,
+                        checkpoint_dir=ckpt_dir,
+                        export_path=export_path,
+                        progress_callback=progress_callback,
+                    )
                 else:
                     midi_files = _midi_files(midi_dir) if os.path.isdir(midi_dir) else []
                     dataset = ChordSequenceDataset(
@@ -229,9 +250,17 @@ def main():
                         num_chords=chord_config.num_chords,
                         num_samples=256 if not midi_files else None,
                     )
-                    loader = DataLoader(dataset, batch_size=training.batch_size, shuffle=True, num_workers=0)
+                    loader = DataLoader(
+                        dataset, batch_size=training.batch_size, shuffle=True, num_workers=0
+                    )
                     ckpt_dir = os.path.join(checkpoint_root, "chord_jepa")
-                    train_chord_jepa(loader, chord_config, training, checkpoint_dir=ckpt_dir, progress_callback=progress_callback)
+                    train_chord_jepa(
+                        loader,
+                        chord_config,
+                        training,
+                        checkpoint_dir=ckpt_dir,
+                        progress_callback=progress_callback,
+                    )
         except Exception as e:
             exception_holder.append(e)
 
@@ -248,6 +277,7 @@ def main():
         train_thread.start()
         while train_thread.is_alive():
             import time
+
             live.update(make_render(state, theme))
             time.sleep(refresh_interval)
         live.update(make_render(state, theme))

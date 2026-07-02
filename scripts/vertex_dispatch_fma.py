@@ -26,14 +26,11 @@ import logging
 import shutil
 import subprocess
 import sys
-import tarfile
 import tempfile
-import time
 from datetime import datetime
 from pathlib import Path
 
-logging.basicConfig(level=logging.INFO,
-                    format="%(asctime)s %(levelname)s: %(message)s")
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s: %(message)s")
 logger = logging.getLogger("vertex_dispatch_fma")
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -46,9 +43,16 @@ TASK_CONFIGS = {
     # (audioread's ffmpeg subprocess is CPU-heavy).
     "genre": {
         "script": "training/scripts/train_fma_genre.py",
-        "extra_args": ["--epochs", "30", "--batch-size", "32",
-                       "--patience", "6", "--vertex",
-                       "--no-balanced-sampler"],
+        "extra_args": [
+            "--epochs",
+            "30",
+            "--batch-size",
+            "32",
+            "--patience",
+            "6",
+            "--vertex",
+            "--no-balanced-sampler",
+        ],
         "machine_type": "n1-standard-8",
         "accelerator_type": "NVIDIA_TESLA_T4",
         "accelerator_count": 1,
@@ -56,11 +60,18 @@ TASK_CONFIGS = {
     },
     "subgenre": {
         "script": "training/scripts/train_fma_subgenre.py",
-        "extra_args": ["--epochs", "40", "--batch-size", "32",
-                       "--patience", "8", "--vertex",
-                       "--no-balanced-sampler",
-                       "--init-from",
-                       "/gcs/kmidi-train-us-central1/runs/fma-genre-20260424-123839/model/best.pt"],
+        "extra_args": [
+            "--epochs",
+            "40",
+            "--batch-size",
+            "32",
+            "--patience",
+            "8",
+            "--vertex",
+            "--no-balanced-sampler",
+            "--init-from",
+            "/gcs/kmidi-train-us-central1/runs/fma-genre-20260424-123839/model/best.pt",
+        ],
         "machine_type": "n1-standard-8",
         "accelerator_type": "NVIDIA_TESLA_T4",
         "accelerator_count": 1,
@@ -68,10 +79,17 @@ TASK_CONFIGS = {
     },
     "tags": {
         "script": "training/scripts/train_fma_tags.py",
-        "extra_args": ["--epochs", "40", "--batch-size", "32",
-                       "--patience", "8", "--vertex",
-                       "--init-from",
-                       "/gcs/kmidi-train-us-central1/runs/fma-genre-20260424-123839/model/best.pt"],
+        "extra_args": [
+            "--epochs",
+            "40",
+            "--batch-size",
+            "32",
+            "--patience",
+            "8",
+            "--vertex",
+            "--init-from",
+            "/gcs/kmidi-train-us-central1/runs/fma-genre-20260424-123839/model/best.pt",
+        ],
         "machine_type": "n1-standard-8",
         "accelerator_type": "NVIDIA_TESLA_T4",
         "accelerator_count": 1,
@@ -107,7 +125,7 @@ TASK_CONFIGS = {
 }
 
 
-SETUP_PY = '''\
+SETUP_PY = """\
 from setuptools import setup, find_packages
 
 setup(
@@ -127,7 +145,7 @@ setup(
         "PyYAML",
     ],
 )
-'''
+"""
 
 
 def build_source_tarball() -> Path:
@@ -163,7 +181,10 @@ def build_source_tarball() -> Path:
     # Build sdist via `python setup.py sdist`
     subprocess.run(
         [sys.executable, "setup.py", "sdist", "--dist-dir", str(tmp)],
-        cwd=str(pkg), check=True, capture_output=True)
+        cwd=str(pkg),
+        check=True,
+        capture_output=True,
+    )
     dist_files = list(tmp.glob("*.tar.gz"))
     if not dist_files:
         raise RuntimeError("setup.py sdist produced no .tar.gz")
@@ -175,9 +196,7 @@ def build_source_tarball() -> Path:
 def upload_tarball(tar_path: Path, bucket: str) -> str:
     """Upload tarball to gs://bucket/vertex-packages/ and return gs:// URI."""
     uri = f"gs://{bucket}/vertex-packages/{tar_path.name}"
-    subprocess.run(
-        ["gcloud", "storage", "cp", str(tar_path), uri],
-        check=True, capture_output=True)
+    subprocess.run(["gcloud", "storage", "cp", str(tar_path), uri], check=True, capture_output=True)
     logger.info("Uploaded package → %s", uri)
     return uri
 
@@ -187,6 +206,7 @@ def submit_job(args: argparse.Namespace, package_uri: str, run_name: str) -> Non
     CLI accepts spot/preemptible GPUs (which the high-level aiplatform SDK
     doesn't expose cleanly) and supports baseOutputDirectory via --config."""
     import yaml
+
     cfg = TASK_CONFIGS[args.task]
 
     # Manifest paths contain /fma_medium/fma_medium/ (FMA tarball nests a
@@ -197,10 +217,14 @@ def submit_job(args: argparse.Namespace, package_uri: str, run_name: str) -> Non
 
     mel_cache_gcs = f"/gcs/{args.bucket}/fma/mel_cache"
     script_args = [
-        "--manifest", manifest_gcs,
-        "--gcs-audio-prefix", gcs_audio_prefix,
-        "--name", run_name,
-        "--num-workers", str(cfg.get("num_workers", 4)),
+        "--manifest",
+        manifest_gcs,
+        "--gcs-audio-prefix",
+        gcs_audio_prefix,
+        "--name",
+        run_name,
+        "--num-workers",
+        str(cfg.get("num_workers", 4)),
     ] + cfg["extra_args"]
     # Pass mel cache to training jobs (skip for the cache-builder itself
     # and the probe, which don't need or want it).
@@ -225,16 +249,18 @@ def submit_job(args: argparse.Namespace, package_uri: str, run_name: str) -> Non
         executor_image = "us-docker.pkg.dev/vertex-ai/training/sklearn-cpu.1-0:latest"
 
     spec = {
-        "workerPoolSpecs": [{
-            "machineSpec": machine_spec,
-            "replicaCount": 1,
-            "pythonPackageSpec": {
-                "executorImageUri": executor_image,
-                "packageUris": [package_uri],
-                "pythonModule": module_name,
-                "args": script_args,
-            },
-        }],
+        "workerPoolSpecs": [
+            {
+                "machineSpec": machine_spec,
+                "replicaCount": 1,
+                "pythonPackageSpec": {
+                    "executorImageUri": executor_image,
+                    "packageUris": [package_uri],
+                    "pythonModule": module_name,
+                    "args": script_args,
+                },
+            }
+        ],
         "baseOutputDirectory": {"outputUriPrefix": base_output_dir},
     }
     if args.spot:
@@ -244,7 +270,10 @@ def submit_job(args: argparse.Namespace, package_uri: str, run_name: str) -> Non
     cfg_path.write_text(yaml.safe_dump(spec, sort_keys=False))
 
     cmd = [
-        "gcloud", "ai", "custom-jobs", "create",
+        "gcloud",
+        "ai",
+        "custom-jobs",
+        "create",
         f"--project={args.project}",
         f"--region={args.region}",
         f"--display-name={run_name}",
@@ -253,9 +282,14 @@ def submit_job(args: argparse.Namespace, package_uri: str, run_name: str) -> Non
     if args.service_account:
         cmd.append(f"--service-account={args.service_account}")
 
-    logger.info("Submitting %s | machine=%s+%s×%d | spot=%s",
-                run_name, cfg["machine_type"], cfg["accelerator_type"],
-                cfg["accelerator_count"], args.spot)
+    logger.info(
+        "Submitting %s | machine=%s+%s×%d | spot=%s",
+        run_name,
+        cfg["machine_type"],
+        cfg["accelerator_type"],
+        cfg["accelerator_count"],
+        args.spot,
+    )
     logger.info("Output dir: %s", base_output_dir)
     logger.info("Config: %s", cfg_path)
 
@@ -277,20 +311,33 @@ def main() -> int:
     ap.add_argument("--project", default="devvy-490312")
     ap.add_argument("--region", default="us-central1")
     ap.add_argument("--bucket", default="kmidi-train-us-central1")
-    ap.add_argument("--service-account", default=None,
-                    help="Optional SA email. Default uses Compute Engine default SA.")
-    ap.add_argument("--manifest-name", default="fma_medium_manifest.csv",
-                    help="Filename under gs://<bucket>/fma/manifest/")
-    ap.add_argument("--spot", action="store_true", default=True,
-                    help="Use spot/preemptible VMs (default, required for T4 on free quota)")
+    ap.add_argument(
+        "--service-account",
+        default=None,
+        help="Optional SA email. Default uses Compute Engine default SA.",
+    )
+    ap.add_argument(
+        "--manifest-name",
+        default="fma_medium_manifest.csv",
+        help="Filename under gs://<bucket>/fma/manifest/",
+    )
+    ap.add_argument(
+        "--spot",
+        action="store_true",
+        default=True,
+        help="Use spot/preemptible VMs (default, required for T4 on free quota)",
+    )
     ap.add_argument("--no-spot", dest="spot", action="store_false")
-    ap.add_argument("--use-mel-cache", action="store_true", default=True,
-                    help="Pass --mel-cache-root=/gcs/<bucket>/fma/mel_cache to "
-                         "training jobs (skip audio decode when cache exists).")
+    ap.add_argument(
+        "--use-mel-cache",
+        action="store_true",
+        default=True,
+        help="Pass --mel-cache-root=/gcs/<bucket>/fma/mel_cache to "
+        "training jobs (skip audio decode when cache exists).",
+    )
     ap.add_argument("--no-mel-cache", dest="use_mel_cache", action="store_false")
     ap.add_argument("--dry-run", action="store_true")
-    ap.add_argument("--name", default=None,
-                    help="Run name. Default: <task>-YYYYMMDD-HHMMSS")
+    ap.add_argument("--name", default=None, help="Run name. Default: <task>-YYYYMMDD-HHMMSS")
     args = ap.parse_args()
 
     run_name = args.name or f"fma-{args.task}-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
