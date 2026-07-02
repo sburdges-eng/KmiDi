@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD056 -->  <!-- frozen point-in-time report; tables intentionally unrestructured -->
 # RT Callback Audit — 2026-05-22
 
 Audit of the audio-thread hot path against four invariants from the platform

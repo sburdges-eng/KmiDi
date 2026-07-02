@@ -10,8 +10,6 @@ Human-readable reference for **memory safety across the KellyFFI boundary**, **d
 
 ## FFI buffer ownership (who allocates / frees)
 
-| What | Where | What to do |
-|------|--------|------------|
 The KellyFFI dylib exposes **one combined C ABI** with two halves:
 
 - **`kelly_*` half** — implemented in C++ (`src/bridge/kelly_ffi.cpp`), declared in `src/bridge/kelly_ffi.h`. Owns `kelly_free_string` for caller-frees returns.
