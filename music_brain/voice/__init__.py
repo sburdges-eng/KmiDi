@@ -156,3 +156,83 @@ try:
     )
 except ImportError:
     pass
+
+# Singing voice suite (ported from archive/feature/integration-finalize):
+# phoneme/pitch processing, formant + neural synthesis, voice input/learning.
+try:
+    from music_brain.voice.phoneme_processor import PhonemeProcessor  # noqa: F401
+    from music_brain.voice.phoneme_processor import PhonemeSequence  # noqa: F401
+    from music_brain.voice.phoneme_processor import Phoneme  # noqa: F401
+
+    __all__.extend(["PhonemeProcessor", "PhonemeSequence", "Phoneme"])
+except ImportError:
+    pass
+
+try:
+    from music_brain.voice.pitch_controller import PitchController  # noqa: F401
+    from music_brain.voice.pitch_controller import PitchCurve  # noqa: F401
+    from music_brain.voice.pitch_controller import ExpressionParams  # noqa: F401
+
+    __all__.extend(["PitchController", "PitchCurve", "ExpressionParams"])
+except ImportError:
+    pass
+
+try:
+    from music_brain.voice.singing_synthesizer import SingingSynthesizer  # noqa: F401
+    from music_brain.voice.singing_synthesizer import FormantConfig  # noqa: F401
+
+    __all__.extend(["SingingSynthesizer", "FormantConfig"])
+except ImportError:
+    pass
+
+try:
+    from music_brain.voice.singing_voice import SingingVoice  # noqa: F401
+    from music_brain.voice.singing_voice import create_singing_voice  # noqa: F401
+
+    __all__.extend(["SingingVoice", "create_singing_voice"])
+except ImportError:
+    pass
+
+try:
+    from music_brain.voice.singing_voice_dev import SingingVoiceDev  # noqa: F401
+    from music_brain.voice.singing_voice_dev import create_singing_voice_dev  # noqa: F401
+
+    __all__.extend(["SingingVoiceDev", "create_singing_voice_dev"])
+except ImportError:
+    pass
+
+try:
+    from music_brain.voice.voice_input import VoiceRecorder  # noqa: F401
+    from music_brain.voice.voice_input import VoiceMimic  # noqa: F401
+
+    __all__.extend(["VoiceRecorder", "VoiceMimic"])
+except ImportError:
+    pass
+
+try:
+    from music_brain.voice.voice_learning import VoiceLearningManager  # noqa: F401
+    from music_brain.voice.voice_learning import VoiceLearner  # noqa: F401
+    from music_brain.voice.voice_learning import VoiceSampleStore  # noqa: F401
+    from music_brain.voice.voice_learning import VoiceSample  # noqa: F401
+    from music_brain.voice.voice_learning import LearnedVoiceProfile  # noqa: F401
+
+    __all__.extend(
+        [
+            "VoiceLearningManager",
+            "VoiceLearner",
+            "VoiceSampleStore",
+            "VoiceSample",
+            "LearnedVoiceProfile",
+        ]
+    )
+except ImportError:
+    pass
+
+try:
+    from music_brain.voice.instrument_synth import InstrumentSynthesizer  # noqa: F401
+    from music_brain.voice.instrument_synth import InstrumentConfig  # noqa: F401
+    from music_brain.voice.instrument_synth import get_instrument_preset  # noqa: F401
+
+    __all__.extend(["InstrumentSynthesizer", "InstrumentConfig", "get_instrument_preset"])
+except ImportError:
+    pass
