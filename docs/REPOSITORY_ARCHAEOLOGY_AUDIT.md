@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD011 MD056 -->  <!-- frozen point-in-time report; tables intentionally unrestructured -->
 # Repository Archaeology & Static Analysis Audit
 
 **Scope:** Full historical and structural analysis of the KmiDi repository to identify lost logic, duplicate implementations, and unification opportunities.  

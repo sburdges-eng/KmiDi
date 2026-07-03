@@ -64,7 +64,7 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 # KmiDi_FINAL validation and integration
 if(USE_KMI_DI_FINAL OR BUILD_NATIVE_MACOS_APP)
     if(NOT EXISTS ${KMI_DI_FINAL_ROOT})
-        message(WARNING "KmiDi_FINAL not found at ${KMI_DI_FINAL_ROOT}. Integration features will be disabled.")
+        message(STATUS "KmiDi_FINAL not found at ${KMI_DI_FINAL_ROOT}. Integration features will be disabled.")
         set(KMI_DI_FINAL_AVAILABLE OFF)
     else()
         message(STATUS "KmiDi_FINAL found at: ${KMI_DI_FINAL_ROOT}")
@@ -90,7 +90,7 @@ endif()
 # Fix is implemented in external/JUCE/modules/juce_core/system/juce_StandardHeader.h
 # These settings MUST be configured before any targets are created to apply effectively.
 if(APPLE)
-    set(CMAKE_OSX_DEPLOYMENT_TARGET "10.12" CACHE STRING "Minimum macOS version")
+    set(CMAKE_OSX_DEPLOYMENT_TARGET "14.0" CACHE STRING "Minimum macOS version")
     # Ensure availability macros are available before system headers
     # Use numeric value (101200 = 10.12 * 10000) since macro constants aren't available at CMake time
     # MAX_ALLOWED defaults to SDK version if not set, so we only set MIN_REQUIRED
@@ -159,10 +159,17 @@ FetchContent_Declare(
     GIT_TAG v1.0.6
     GIT_SHALLOW TRUE
 )
-FetchContent_MakeAvailable(readerwriterqueue)
-
-# Explicitly populate SOURCE_DIR for header-only library without CMakeLists.txt
+# We only want the headers, so we bypass FetchContent_MakeAvailable to avoid CMake warnings
+# from its older CMakeLists.txt (like "Compatibility with CMake < 3.10 will be removed").
+cmake_policy(PUSH)
+if(POLICY CMP0169)
+    cmake_policy(SET CMP0169 OLD)
+endif()
 FetchContent_GetProperties(readerwriterqueue)
+if(NOT readerwriterqueue_POPULATED)
+    FetchContent_Populate(readerwriterqueue)
+endif()
+cmake_policy(POP)
 
 if(NOT TARGET readerwriterqueue)
     add_library(readerwriterqueue INTERFACE)

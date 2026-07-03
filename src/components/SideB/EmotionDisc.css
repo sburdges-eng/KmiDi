@@ -1,0 +1,96 @@
+/* ─────────────────────────────────────────────────────────
+   EmotionDisc — polar surface for setting family + intensity
+   Ported from design/prototype-tactile.html.
+   ───────────────────────────────────────────────────────── */
+
+.emotion-disc {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3, 12px);
+  width: 100%;
+}
+
+.emotion-disc__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-family: var(--font-mono, 'IBM Plex Mono', ui-monospace, monospace);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted, #6b6b74);
+}
+
+.emotion-disc__title {
+  color: var(--text-secondary, #9a9aa2);
+}
+
+.emotion-disc__meta {
+  color: var(--text-muted, #6b6b74);
+}
+
+.emotion-disc__wrap {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  width: 100%;
+  max-width: 320px;
+  margin: 0 auto;
+}
+
+.emotion-disc__svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  cursor: crosshair;
+  outline: none;
+  /* Stop browser from interpreting drag gestures as scrolls on touch. */
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.emotion-disc__svg:focus-visible {
+  outline: 2px solid var(--accent-focus, var(--accent, #c9a227));
+  outline-offset: 4px;
+  border-radius: 50%;
+}
+
+.emotion-disc__label {
+  cursor: pointer;
+  transition: fill 160ms ease;
+}
+
+.emotion-disc__label:hover {
+  fill: var(--text-primary, #e9e9ec);
+}
+
+.emotion-disc__readout {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  font-family: var(--font-mono, 'IBM Plex Mono', ui-monospace, monospace);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  color: var(--text-primary, #e9e9ec);
+  text-transform: uppercase;
+}
+
+.emotion-disc__sep {
+  color: var(--text-muted, #6b6b74);
+}
+
+.emotion-disc__hint {
+  margin: 0;
+  font-family: var(--font-mono, 'IBM Plex Mono', ui-monospace, monospace);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  color: var(--text-muted, #6b6b74);
+  text-align: center;
+  opacity: 0.65;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .emotion-disc__label {
+    transition: none;
+  }
+}

@@ -122,7 +122,7 @@ class TestTrainingScripts:
         assert path.exists()
 
     def test_train_emotion_exists(self):
-        path = REPO_ROOT / "training" / "scripts" / "train_emotion_optimized.py"
+        path = REPO_ROOT / "training" / "scripts" / "train_emotion_local.py"
         assert path.exists()
 
     def test_jepa_config_exists(self):

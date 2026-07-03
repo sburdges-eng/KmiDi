@@ -20,7 +20,7 @@ Practical plan for ultra-low-latency audio/ML loops on M-series Macs, tuned for 
 
 ### Checklist
 
-- [ ] Audio render callback does **no allocations** and **no locks** (see [EQ note](#realtime-safety-master-eq) below).
+- [ ] Audio render callback does **no allocations** and **no locks** (see [EQ note](#realtime-safety-master-eq-implemented) below).
 - [ ] UI timers use `NSBackgroundActivityScheduler` or background QoS where applicable.
 - [ ] Any `std::future`/thread pools: set explicit QoS per worker (utility/background for non-audio).
 

@@ -9,15 +9,9 @@
     },
     {
       "name": "python-api",
-      "runtimeExecutable": "python3",
-      "runtimeArgs": ["-m", "uvicorn", "music_brain.api:app", "--reload", "--port", "8000"],
+      "runtimeExecutable": "./venv/bin/uvicorn",
+      "runtimeArgs": ["music_brain.api:app", "--reload", "--port", "8000"],
       "port": 8000
-    },
-    {
-      "name": "tauri",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev:tauri"],
-      "port": null
     }
   ]
 }

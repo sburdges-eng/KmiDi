@@ -11,10 +11,34 @@ import { QuickStartPanel } from './components/QuickStartPanel';
 import LyricPanel from './components/LyricPanel';
 import { SpectoCloudPanel } from './components/SpectoCloudPanel';
 import { MusicCustomizer } from './components/MusicCustomizer';
+import { RotaryModeSelector } from './components/RotaryModeSelector';
+import UniversalMusicInput from './components/UniversalMusicInput/UniversalMusicInput';
 import { useMusicBrain } from './hooks/useMusicBrain';
 import './console-shell.css';
 
-type Mode = 'mix-detail' | 'inspire' | 'create' | 'compose';
+type Mode = 'mix-detail' | 'inspire' | 'create' | 'compose' | 'universal';
+
+/**
+ * Feature flag: swap the vertical NavRail for the tactile rotary mode
+ * selector (see design/prototype-tactile.html). Default OFF so this
+ * ship is a no-op for existing users. Enable at build time with
+ *   VITE_ROTARY_NAV=true npm run dev
+ * or at runtime with
+ *   localStorage.setItem('kmidi.rotaryNav', 'true'); location.reload();
+ */
+const USE_ROTARY_NAV: boolean = (() => {
+  if (typeof window === 'undefined') return false;
+  // Vite exposes env at import.meta.env; guard for environments without it.
+  try {
+    const viteEnv = (import.meta as unknown as { env?: Record<string, string | undefined> }).env;
+    if (viteEnv?.VITE_ROTARY_NAV === 'true') return true;
+  } catch { /* noop */ }
+  try {
+    return window.localStorage.getItem('kmidi.rotaryNav') === 'true';
+  } catch {
+    return false;
+  }
+})();
 
 type Channel = {
   id: string;
@@ -70,6 +94,17 @@ const NAV_ITEMS: { id: Mode; label: string; icon: ReactNode }[] = [
         <rect x="11" y="3" width="6" height="6" rx="1" />
         <rect x="3" y="11" width="6" height="6" rx="1" />
         <rect x="11" y="11" width="6" height="6" rx="1" />
+      </svg>
+    ),
+  },
+  {
+    id: 'universal',
+    label: 'Universal Input',
+    icon: (
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5">
+        <rect x="3" y="3" width="6.5" height="14" rx="1" />
+        <rect x="10.5" y="3" width="6.5" height="14" rx="1" />
+        <path d="M12.5 7h2.5M12.5 10h2.5M12.5 13h1.5" />
       </svg>
     ),
   },
@@ -321,8 +356,17 @@ export default function AppConsole() {
         </div>
       </header>
 
-      <div className="lower-deck">
-        <NavRail activeMode={mode} onModeChange={setMode} />
+      <div className={`lower-deck${USE_ROTARY_NAV ? ' lower-deck--rotary' : ''}`}>
+        {USE_ROTARY_NAV ? (
+          <RotaryModeSelector<Mode>
+            items={NAV_ITEMS}
+            activeMode={mode}
+            onModeChange={setMode}
+            panelId="workspace-panel"
+          />
+        ) : (
+          <NavRail activeMode={mode} onModeChange={setMode} />
+        )}
 
         <div
           id="workspace-panel"
@@ -404,6 +448,12 @@ export default function AppConsole() {
           {displayMode === 'compose' && (
             <section className="mode-compose mode-enter" aria-label="Intent Builder">
               <IntentBuilder />
+            </section>
+          )}
+
+          {displayMode === 'universal' && (
+            <section className="mode-universal mode-enter" aria-label="Universal music input">
+              <UniversalMusicInput apiStatus={apiStatus} />
             </section>
           )}
         </div>

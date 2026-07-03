@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD056 -->  <!-- frozen point-in-time report; tables intentionally unrestructured -->
 # Spec-to-Implementation Matrix
 
 Historical note
