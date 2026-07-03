@@ -19,6 +19,7 @@ Usage::
     python scripts/vertex_dispatch_fma.py --task tags
     python scripts/vertex_dispatch_fma.py --task jepa
 """
+
 from __future__ import annotations
 
 import argparse
