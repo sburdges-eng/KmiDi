@@ -18,6 +18,7 @@ Usage::
     python scripts/export_emotion_classifier.py \\
         --checkpoint <path> --output-dir models/ --benchmark
 """
+
 from __future__ import annotations
 
 import argparse
@@ -45,7 +46,7 @@ logger = logging.getLogger("export_emotion_classifier")
 # Fixed input shape for Core ML (time is variable on ONNX).
 #   [batch=1, channel=1, n_mels, time]
 DEFAULT_N_MELS = 64
-DEFAULT_TIME = 96   # ~3.0s @ 16kHz with hop=512 → 94 frames, round up
+DEFAULT_TIME = 96  # ~3.0s @ 16kHz with hop=512 → 94 frames, round up
 
 
 @dataclass
@@ -98,8 +99,9 @@ def export_onnx(model: AudioClassifier, output_path: Path, n_mels: int) -> Path:
     return output_path
 
 
-def verify_onnx(model: AudioClassifier, onnx_path: Path, n_mels: int,
-                trials: int = 4) -> tuple[bool, float]:
+def verify_onnx(
+    model: AudioClassifier, onnx_path: Path, n_mels: int, trials: int = 4
+) -> tuple[bool, float]:
     import onnxruntime as ort
 
     sess = ort.InferenceSession(str(onnx_path))
@@ -115,8 +117,12 @@ def verify_onnx(model: AudioClassifier, onnx_path: Path, n_mels: int,
         max_diff = max(max_diff, float(np.abs(pt_out - ort_out).max()))
 
     passed = max_diff < 1e-4
-    logger.info("ONNX verification across %d trials: max_diff=%.2e  %s",
-                trials, max_diff, "PASS" if passed else "FAIL")
+    logger.info(
+        "ONNX verification across %d trials: max_diff=%.2e  %s",
+        trials,
+        max_diff,
+        "PASS" if passed else "FAIL",
+    )
     return passed, max_diff
 
 
@@ -138,7 +144,7 @@ def export_coreml(model: AudioClassifier, output_path: Path, n_mels: int) -> Opt
         inputs=[ct.TensorType(name="mel", shape=dummy.shape)],
         outputs=[ct.TensorType(name="logits")],
         convert_to="mlprogram",
-        compute_units=ct.ComputeUnit.ALL,   # ANE-preferred
+        compute_units=ct.ComputeUnit.ALL,  # ANE-preferred
         minimum_deployment_target=ct.target.macOS14,
     )
     mlmodel.save(str(output_path))
@@ -161,13 +167,17 @@ def verify_coreml(model: AudioClassifier, coreml_path: Path, n_mels: int) -> tup
     max_diff = float(np.abs(pt_out - np.asarray(cm_arr)).max())
     # Core ML's CPU/GPU/ANE fused kernels diverge more than ORT; relax threshold.
     passed = max_diff < 5e-3
-    logger.info("Core ML verification: max_diff=%.2e  %s",
-                max_diff, "PASS" if passed else "FAIL")
+    logger.info("Core ML verification: max_diff=%.2e  %s", max_diff, "PASS" if passed else "FAIL")
     return passed, max_diff
 
 
-def benchmark(model: AudioClassifier, onnx_path: Path, coreml_path: Optional[Path],
-              n_mels: int, runs: int = 200) -> None:
+def benchmark(
+    model: AudioClassifier,
+    onnx_path: Path,
+    coreml_path: Optional[Path],
+    n_mels: int,
+    runs: int = 200,
+) -> None:
     import onnxruntime as ort
 
     mel = np.random.default_rng(1).standard_normal((1, 1, n_mels, DEFAULT_TIME)).astype(np.float32)
@@ -191,11 +201,17 @@ def benchmark(model: AudioClassifier, onnx_path: Path, coreml_path: Optional[Pat
         sess.run(None, {"mel": mel})
     dt_ort = (time.perf_counter() - t0) / runs * 1000
 
-    logger.info("Bench (ms/inference @ time=%d, %d runs): torch=%.3f  ort=%.3f",
-                DEFAULT_TIME, runs, dt_pt, dt_ort)
+    logger.info(
+        "Bench (ms/inference @ time=%d, %d runs): torch=%.3f  ort=%.3f",
+        DEFAULT_TIME,
+        runs,
+        dt_pt,
+        dt_ort,
+    )
 
     if coreml_path and platform.system() == "Darwin":
         import coremltools as ct
+
         ml = ct.models.MLModel(str(coreml_path))
         for _ in range(10):
             ml.predict({"mel": mel})
@@ -208,11 +224,15 @@ def benchmark(model: AudioClassifier, onnx_path: Path, coreml_path: Optional[Pat
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--checkpoint", type=str, required=True,
-                    help="Path to best.pt from train_emotion_local.py")
-    ap.add_argument("--output-dir", type=str, default=None,
-                    help="Directory for .onnx and .mlpackage. "
-                         "Default: <checkpoint-dir>/export/")
+    ap.add_argument(
+        "--checkpoint", type=str, required=True, help="Path to best.pt from train_emotion_local.py"
+    )
+    ap.add_argument(
+        "--output-dir",
+        type=str,
+        default=None,
+        help="Directory for .onnx and .mlpackage. " "Default: <checkpoint-dir>/export/",
+    )
     ap.add_argument("--n-mels", type=int, default=DEFAULT_N_MELS)
     ap.add_argument("--skip-coreml", action="store_true")
     ap.add_argument("--benchmark", action="store_true")
@@ -223,8 +243,7 @@ def main() -> int:
         logger.error("Checkpoint not found: %s", ckpt_path)
         return 2
 
-    out_dir = Path(args.output_dir).expanduser() if args.output_dir \
-        else ckpt_path.parent / "export"
+    out_dir = Path(args.output_dir).expanduser() if args.output_dir else ckpt_path.parent / "export"
     out_dir.mkdir(parents=True, exist_ok=True)
 
     model, ckpt = load_classifier(ckpt_path)
@@ -245,28 +264,37 @@ def main() -> int:
             result.coreml_verified, _ = verify_coreml(model, coreml_path, args.n_mels)
 
     # Sidecar metadata (class labels + input contract) for consumers.
-    (out_dir / "emotion_classifier.meta.json").write_text(json.dumps({
-        "source_checkpoint": str(ckpt_path),
-        "source_epoch": int(ckpt.get("epoch", -1)),
-        "source_val_acc": float(ckpt.get("val_acc", float("nan"))),
-        "num_classes": result.num_classes,
-        "class_names": class_names,
-        "input": {
-            "name": "mel",
-            "layout": "NCHW",
-            "shape": [1, 1, args.n_mels, "time (variable on ONNX)"],
-            "sample_rate_hint": 16000,
-            "n_mels": args.n_mels,
-        },
-        "output": {"name": "logits", "shape": [1, result.num_classes]},
-    }, indent=2))
+    (out_dir / "emotion_classifier.meta.json").write_text(
+        json.dumps(
+            {
+                "source_checkpoint": str(ckpt_path),
+                "source_epoch": int(ckpt.get("epoch", -1)),
+                "source_val_acc": float(ckpt.get("val_acc", float("nan"))),
+                "num_classes": result.num_classes,
+                "class_names": class_names,
+                "input": {
+                    "name": "mel",
+                    "layout": "NCHW",
+                    "shape": [1, 1, args.n_mels, "time (variable on ONNX)"],
+                    "sample_rate_hint": 16000,
+                    "n_mels": args.n_mels,
+                },
+                "output": {"name": "logits", "shape": [1, result.num_classes]},
+            },
+            indent=2,
+        )
+    )
 
     if args.benchmark:
         benchmark(model, result.onnx_path, result.coreml_path, args.n_mels)
 
-    logger.info("Export summary: ONNX=%s  verified=%s  CoreML=%s  verified=%s",
-                result.onnx_path, result.onnx_verified,
-                result.coreml_path, result.coreml_verified)
+    logger.info(
+        "Export summary: ONNX=%s  verified=%s  CoreML=%s  verified=%s",
+        result.onnx_path,
+        result.onnx_verified,
+        result.coreml_path,
+        result.coreml_verified,
+    )
     return 0 if result.onnx_verified else 1
 
 
