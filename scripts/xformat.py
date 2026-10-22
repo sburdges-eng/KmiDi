@@ -245,7 +245,19 @@ def check_schema_drift(cls: Classification) -> Result:
 
 
 def check_gitnexus() -> Result:
-    cp = _run(["npx", "gitnexus", "status"])
+    # Never use a package runner here: an optional freshness check must not
+    # download or execute an unpinned package from a registry.
+    executable = "gitnexus.cmd" if sys.platform == "win32" else "gitnexus"
+    cli = REPO_ROOT / "node_modules" / ".bin" / executable
+    unavailable = Result(
+        "gitnexus", WARN, "gitnexus status unavailable (local CLI missing/unusable)"
+    )
+    if not cli.is_file():
+        return unavailable
+    try:
+        cp = _run([str(cli), "status"], cwd=REPO_ROOT)
+    except OSError:
+        return unavailable
     out = (cp.stdout + cp.stderr).lower()
     if cp.returncode != 0:
         return Result("gitnexus", WARN, "gitnexus status unavailable (index/CLI missing)")
@@ -253,7 +265,7 @@ def check_gitnexus() -> Result:
         return Result(
             "gitnexus",
             WARN,
-            "index STALE — run `npx gitnexus analyze`; "
+            f"index STALE — run `node_modules/.bin/{executable} analyze`; "
             "agent impact analysis unreliable until then",
         )
     return Result(
