@@ -101,6 +101,39 @@ def test_persistence_round_trip(tmp_path) -> None:
     assert hits[0].metadata["u"] == 1
 
 
+def test_persistence_preserves_metadata_and_user_scoped_recall(tmp_path) -> None:
+    mem = LatentMemory(dim=2)
+    frame = _frame(torch.tensor([[3.0, 4.0]]), time_index=7, emotion_va=(0.5, -0.25))
+    metadata = {"user_id": "利用者", "nested": {"tags": ["音楽", None, True]}}
+    mem.remember("session-🎵\x00", frame, metadata=metadata)
+    mem.remember("other-user", frame, metadata={"user_id": "other"})
+    path = tmp_path / "memory.npz"
+    mem.save(path)
+    restored = LatentMemory.load(path)
+    np.testing.assert_array_equal(restored.snapshot_vectors(), mem.snapshot_vectors())
+    assert restored.dim == 2
+    assert len(restored) == 2
+    assert restored.recall(frame, user_id="利用者") == mem.recall(frame, user_id="利用者")
+    assert [hit.id for hit in restored.recall(frame, user_id="other")] == ["other-user"]
+    assert restored.recall(frame, user_id="unknown") == []
+    restored.remember("session-🎵\x00", frame, metadata={"user_id": "other"})
+    assert restored.recall(frame, user_id="利用者") == []
+    assert len(restored.recall(frame, user_id="other")) == 2
+
+
+def test_load_rejects_legacy_object_archive(tmp_path) -> None:
+    path = tmp_path / "legacy.npz"
+    np.savez_compressed(
+        path,
+        dim=np.asarray(2),
+        vectors=np.array([[1.0, 0.0]], dtype=np.float32),
+        ids=np.asarray(["entry"], dtype=object),
+        meta=np.asarray(['{"user_id": "alice"}'], dtype=object),
+    )
+    with pytest.raises(ValueError, match="[Oo]bject.*pickle"):
+        LatentMemory.load(path)
+
+
 def test_remember_rejects_dim_mismatch() -> None:
     mem = LatentMemory(dim=4)
     with pytest.raises(ValueError, match="dim"):

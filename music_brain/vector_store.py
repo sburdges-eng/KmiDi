@@ -18,9 +18,14 @@ backend is needed, the same public API can be reused by a subclass.
 
 Persistence layout (``save(path)`` writes a single ``.npz`` with):
   - vectors:  (N, D) float32 array, L2-normalised at insert time
-  - ids:      (N,) object array (UTF-8 strings)
-  - meta:     (N,) object array (JSON-encoded metadata or empty string)
+  - ids:      (N,) Unicode array (JSON-encoded ID strings)
+  - meta:     (N,) Unicode array (JSON-encoded metadata or empty string)
   - dim:      scalar int (embedding dimension)
+
+All arrays load with pickle disabled. Legacy archives containing object
+arrays are intentionally unsupported; recreate them from the original
+vectors, IDs, and metadata using ``save``. Never enable pickle to load an
+untrusted archive.
 """
 
 from __future__ import annotations
@@ -160,33 +165,61 @@ class VectorStore:
         path = Path(path)
         path.parent.mkdir(parents=True, exist_ok=True)
         meta_blobs = np.asarray(
-            [json.dumps(m) if m is not None else "" for m in self._meta], dtype=object
+            [json.dumps(m) if m is not None else "" for m in self._meta], dtype=str
         )
         np.savez_compressed(
             path,
             vectors=self._vectors.astype(np.float32),
-            ids=np.asarray(self._ids, dtype=object),
+            # JSON escaping preserves every ID, including trailing NULs that
+            # fixed-width NumPy Unicode scalars would otherwise strip.
+            ids=np.asarray([json.dumps(id_) for id_ in self._ids], dtype=str),
             meta=meta_blobs,
             dim=np.asarray(self._dim),
         )
 
     @classmethod
     def load(cls, path: Path) -> "VectorStore":
-        """Load a store previously written by ``save``."""
+        """Load a store without unpickling; reject legacy object archives.
+
+        Raises ValueError for incompatible or malformed persisted data.
+        """
         path = Path(path)
-        with np.load(path, allow_pickle=True) as data:
-            dim = int(data["dim"])
-            vectors = np.asarray(data["vectors"], dtype=np.float32)
-            ids = [str(x) for x in data["ids"].tolist()]
-            meta_raw = data["meta"].tolist()
+        with np.load(path, allow_pickle=False) as data:
+            try:
+                dim_raw = data["dim"]
+                vectors = data["vectors"]
+                ids_raw = data["ids"]
+                meta_raw = data["meta"]
+            except ValueError as exc:
+                if "Object arrays" in str(exc):
+                    raise ValueError(
+                        "Object arrays require pickle and are not supported; "
+                        "recreate this legacy vector store from the original data using save()"
+                    ) from exc
+                raise
+            except KeyError as exc:
+                raise ValueError("vector store archive is missing a required array") from exc
+        if dim_raw.shape != () or dim_raw.dtype.kind not in "iu":
+            raise ValueError("saved dim must be a scalar integer")
+        dim = int(dim_raw)
         store = cls(dim)
-        if vectors.shape[0] > 0:
-            if vectors.shape[1] != dim:
-                raise ValueError(f"saved vectors dim {vectors.shape[1]} != saved dim {dim}")
-            store._vectors = vectors
-            store._ids = ids
-            store._meta = [json.loads(m) if m else None for m in meta_raw]
-            store._index = {k: i for i, k in enumerate(store._ids)}
+        if vectors.ndim != 2 or vectors.shape[1] != dim or vectors.dtype.kind not in "fiu":
+            raise ValueError(f"saved vectors must be a numeric (N, {dim}) array")
+        for name, values in (("ids", ids_raw), ("meta", meta_raw)):
+            if values.shape != (vectors.shape[0],) or values.dtype.kind != "U":
+                raise ValueError(f"saved {name} must be a Unicode array with one entry per vector")
+        ids = [json.loads(value) for value in ids_raw.tolist()]
+        if any(not isinstance(id_, str) or not id_ for id_ in ids):
+            raise ValueError("saved IDs must be non-empty strings")
+        if len(set(ids)) != len(ids):
+            raise ValueError("saved IDs must be unique")
+        metadata = [json.loads(value) if value else None for value in meta_raw.tolist()]
+        if any(meta is not None and not isinstance(meta, dict) for meta in metadata):
+            raise ValueError("saved metadata must be JSON objects or null")
+        store._vectors = np.asarray(vectors, dtype=np.float32)
+        store._ids = ids
+        store._meta = metadata
+        store._index = {k: i for i, k in enumerate(ids)}
         return store
 
 
